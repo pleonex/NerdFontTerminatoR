@@ -1,0 +1,113 @@
+////////////////////////////////
+// NFTR (Nitro FonT Resource) //
+////////////////////////////////
+
+cabecera Nitro 
+----------------------- 
+Es la cabecera del fichero 
+Cabecera: 
+- 4 bytes con la signatura "RTFN" 
+- 2 bytes "byte order mark" (BOM)
+- 2 bytes con la versión, puede ser 0100 (1.0), 0101 (1.1) ó 0102 (1.2) 
+- 4 bytes con la longitud del fichero (pokemon b/n valor incorrecto)
+- 2 bytes con el offset al inicio del archivo
+- 2 bytes con el número de bloques que siguen 
+
+
+cabecera bloques
+----------------------- 
+La incluyen todos los bloques descritos a continuación.
+Todos los offsets relativos apuntando a bloques omiten estos bytes.
+- 4 bytes con la signatura "FNIF" 
+- 4 bytes con la longitud del bloque 
+
+
+bloque FINF (Font INFo) 
+----------------------- 
+Información genérica sobre la fuente.
++ 1 byte ???, 0 
+- 1 byte con la altura del glifo // Usada para cálculo de tamaño de cajas de texto
+- 2 bytes con el índice a la imagen del caracter de error.
+- 1 byte valor por defecto de bearing X
+- 1 byte valor por defecto de la anchura
+- 1 byte valor por defecto de advance width 
+- 1 byte con el tipo de codificación (0/UTF8, 1/UNICODE, 2/SJIS, 3/CP1252) 
+- 4 bytes con el offset al bloque CGLP
+- 4 bytes con el offset al bloque CWDH 
+- 4 bytes con el offset al primer bloque CMAP
+SI VERSIÓN 1.2:
+    - 1 byte con el Height (Glyp Metrics)
+    - 1 byte con el Width (Glyp Metrics)
+    - 1 byte con el Bearing Y (Glyp Metrics)
+    - 1 byte con el Bearing X (Glyp Metrics)
+    http://www.freetype.org/freetype2/docs/glyphs/glyphs-3.html
+
+
+bloque CGLP (Character GLyPh) 
+---------------------------- 
+Aquí va la información de los glifos 
+- 1 byte con la anchura del glifo 
+- 1 byte con la altura del glifo 
+- 2 bytes con la longitud del glifo en bytes 
+- 1 byte con el Height (Glyp Metrics) 
+- 1 byte con el Width (Glyp Metrics)
+- 1 byte con los bpp 
+- 1 byte con la rotación (0,7/0º; 1,2/90º; 3,4/180º; 5,6/270º; >7/error) 
+Datos por cada glifo: 
+- X bytes con el glifo(X es la longitud del glifo indicada antes) 
+
+
+bloque CWDH (Character WiDtH) 
+----------------------------- 
+Aquí va la información de los tiles que forman la fuente de caracteres. 
+- 2 bytes con el código del primer glifo
+- 2 bytes con el código del último glifo
+- 4 bytes con el bloque CWDH para caracteres fuera del intervalo
+Datos por cada glifo: 
+- 1 byte bearing X
+- 1 byte con el ancho del glifo 
+- 1 byte advance width
+
+
+bloque CMAP (Character MAP) 
+--------------------------- 
+Aquí se definen los códigos que usará cada uno de los carácteres 
+- 2 bytes con el código de carácter inicial 
+- 2 bytes con el código de carácter final 
+- 4 bytes con el tipo de CMAP (0/1/2) 
+- 4 bytes con el offset al siguiente bloque CMAP (no usado por el juego)
+  Si el offset es 0 o tiene un valor que excede a la longitud del fichero indica que no hay más bloques 
+Datos por cada glifo: 
+Tipo 0: 
+- 2 bytes con el número de glifo del primer carácter 
+Tipo 1: 
+Por cada carácter: 
+- 2 bytes con el número de glifo del carácter (si es 0xFFFF no cuenta) 
+Tipo 2: 
+- 2 bytes con el número de caracteres 
+Por cada carácter: 
+- 2 bytes con el código del carácter 
+- 2 bytes con el número de glifo 
+
+notas
+----------------------- 
+* Si un caracter no se encuentra entre los límites descritos en la sección CWDH, se debe tomar como sección CWDH el offset especificado ahí. Se usará para dividir en varios secciones el bloque.
+
+* En caso de fallar a la hora de encontrar el bloque CWDH se toma los valores por defecto de la sección FINF.
+
+* No hay restricción en el número de bloques CMAP, sin embargo la búsqueda del caracter se realiza de forma incremental usando los valores de "carácter inicial" y "carácter final". Es decir, si se encuentra el código de un caracter en un intervalo de un bloque CMAP y se da que no está contenido en ese bloque pero en uno posterior, el resultado será que no se ha encontrado el vínculo. La búsqueda de bloques CMAP se para en cuanto un caracter está en un intervalo.
+
+* Sólo se recorre el archivo de forma incremental una vez, cuando en la conversión de los punteros en absolutos. Más tarde se usarán los punteros de la sección FINF.
+
+* Las secciones no tienen que estar por orden. Es decir, el único recorrido incremental se hace iterando sobre tres posibilidades de cabecera: FNIF, CGLP y CWDH. CMAP si TIENE que estar después de estas. Normalmente el orden es el descrito anteriormente.
+
+* En los offsets de la sección FINF, el offset a CGLP no puede ser 0 (no está contemplada esa opción) pero, el de CWDH y CMAP sí.
+
+* Se podrían incluir nuevas secciones y que el archivo siga siendo procesado correctamente. El único requisito es que comience con el formato: 4 bytes indicando tipo + 4 bytes indicando su longitud (sin tener en cuenta los del tipo).
+
+----------------------- 
+Información elaborada por CUE con la colaboracón de Lyan53 y pleonex.
+Actuación por pleonex a 01/05/2013
+
+Copyleft 2012 CUE. 
+Verbatim copying, translation and distribution of this entire article is permitted in any digital medium, provided this notice is preserved.

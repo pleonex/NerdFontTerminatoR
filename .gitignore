@@ -1,0 +1,12 @@
+# Ignore IDE conf files
+NerdFontTerminatoR.userprefs
+NerdFontTerminatoR.suo
+NerdFontTerminatoR/NerdFontTerminatoR.csproj.user
+
+# Ignore test files
+files/
+
+# Ignore build files
+NerdFontTerminatoR/bin/
+NerdFontTerminatoR/obj/
+
