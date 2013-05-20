@@ -99,7 +99,46 @@ namespace Nftr.Structure
 
 		protected override void WriteData(Stream strOut)
 		{
-			throw new NotImplementedException();
+			BinaryWriter bw = new BinaryWriter(strOut);
+
+			bw.Write(this.BoxWidth);
+			bw.Write(this.BoxHeight);
+			int boxSize = this.BoxWidth * this.BoxHeight * this.Depth;
+			boxSize = (ushort)Math.Ceiling(boxSize / 8.0);	// Convert to bytes
+			bw.Write((ushort)boxSize);
+			bw.Write(this.GlyphHeight);
+			bw.Write(this.GlyphWidth);
+			bw.Write(this.Depth);
+			bw.Write(this.Rotation);
+
+			Colour[] palette = this.GetPalette();
+			foreach (Colour[,] gl in this.glyphs) {
+
+				byte val = 0;
+				int bitPos = 0;
+
+				for (int h = 0; h < this.BoxHeight; h++) {
+					for (int w = 0; w < this.BoxWidth; w++) {
+						int colIndex = Array.FindIndex(palette, p => p.Equals(gl[w, h]));
+
+						for (int d = this.Depth - 1; d >= 0; d--, bitPos++) {
+							// Update pos and write if need
+							if (bitPos % 8 == 0 && bitPos != 0) {
+								bw.Write(val);
+								val = 0;
+							}
+
+							int bit = (colIndex >> d) & 1;
+							val |= (byte)(bit << (7 - (bitPos % 8)));
+						}
+					} // End for width
+				} // End for height
+
+				// Write the last value
+				bw.Write(val);
+			} // End for glyph
+
+			bw.Flush();
 		}
 
 		public override string Name {

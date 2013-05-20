@@ -55,15 +55,8 @@ namespace Nftr
 
 
         public NftrFont(string nftrPath)
-			: base(typeof(Finf), typeof(Cglp), typeof(Cwdh), typeof(Cmap))
+			: base(nftrPath, typeof(Finf), typeof(Cglp), typeof(Cwdh), typeof(Cmap))
         {
-			FileStream fs = new FileStream(nftrPath, FileMode.Open, FileAccess.Read, FileShare.Read);
-
-			this.Read(fs, (int)fs.Length);
-						
-			fs.Dispose();
-			fs.Close();
-			fs = null;
         }
 
         public NftrFont(string xmlFontInfo, string glyphs)

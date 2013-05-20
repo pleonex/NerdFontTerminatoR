@@ -24,7 +24,7 @@ namespace Nftr.Structure
 
 		protected override void WriteData(Stream strOut)
 		{
-			throw new NotImplementedException();
+			this.firstRegion.Write(strOut);
 		}
 
 		public override string Name {
@@ -131,7 +131,7 @@ namespace Nftr.Structure
 				uint nextRegion = br.ReadUInt32();
 
 				// Read widths
-				int numWidths = wr.LastChar - wr.FirstChar;
+				int numWidths = wr.LastChar - wr.FirstChar + 1;
 				wr.Widths = new GlyphWidth[numWidths];
 
 				for (int i = 0; i < numWidths; i++) {
@@ -149,6 +149,25 @@ namespace Nftr.Structure
 				}
 
 				return wr;
+			}
+
+			public void Write(Stream strOut)
+			{
+				BinaryWriter bw = new BinaryWriter(strOut);
+				bw.Write(this.FirstChar);
+				bw.Write(this.LastChar);
+				if (this.NextRegion == null)
+					bw.Write(0);
+				else {
+					uint size = 8 + 3 * (uint)this.Widths.Length;
+					bw.Write(size);
+				}
+
+				foreach (GlyphWidth w in this.Widths) {
+					w.Write(strOut);
+				}
+
+				bw.Flush();
 			}
 
 			public GlyphWidth GetWidth(ushort charCode)

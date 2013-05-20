@@ -49,6 +49,27 @@ namespace Nftr
             private set;
         }
 
+		public override bool Equals(object obj)
+		{
+			if (obj == null)
+				return false;
+			if (ReferenceEquals(this, obj))
+				return true;
+			if (obj.GetType() != typeof(Colour))
+				return false;
+			Colour other = (Colour)obj;
+			return (this.Red == other.Red) && (this.Green == other.Green) &&
+				(this.Blue == other.Blue);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked {
+				return this.Red.GetHashCode() ^ this.Green.GetHashCode() ^ 
+					this.Blue.GetHashCode();
+			}
+		}
+
 		public System.Drawing.Color ToColor()
 		{
 			return System.Drawing.Color.FromArgb(255, this.Red, this.Green, this.Blue);

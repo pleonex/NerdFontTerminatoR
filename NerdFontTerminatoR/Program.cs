@@ -19,8 +19,8 @@ namespace Nftr
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
 #else
-			TestSingle();
-			//TestFull();
+			//TestSingle();
+			TestFull();
 #endif
         }
 
@@ -30,12 +30,15 @@ namespace Nftr
 			fontPath += "/nds/projects/NDS/NerdFontTerminatoR/files/";
 			fontPath += "Animal World - Big Cats/3_textfont.nftr";
 
-			string outPath = "/home/benito/Proyectos/Fonts/";
+			string outPath = "/home/benito/";
 			outPath += "test";
+
 			NftrFont font = new NftrFont(fontPath);
-			font.Export(
-				outPath + ".xml",
-				outPath + ".png");
+			font.Export(outPath + ".xml", outPath + ".png");
+			font.Write(outPath + ".new");
+
+			Console.WriteLine("{0} written.", 
+			                  CompareFiles(fontPath, outPath + ".new") ? "Successfully" : "Unsuccessfully");
 		}
 
 		private static void TestFull()
@@ -55,16 +58,45 @@ namespace Nftr
 					Console.WriteLine(fontOut);
 					if (File.Exists(fontOut + ".png"))
 						continue;
+
 					try {
 						NftrFont font = new NftrFont(f);
-						font.Export(
-							fontOut + ".xml",
-							fontOut + ".png");
+						//font.Export(fontOut + ".xml", fontOut + ".png");
+
+						MemoryStream ms = new MemoryStream();
+						font.Write(ms);
+						if (!CompareFiles(ms, File.OpenRead(f)))
+							return;
 					}
-					catch { }
+					catch { Console.WriteLine("--> ERROR"); }
 				}
 			}
 
+		}
+
+		private static bool CompareFiles(string f1, string f2)
+		{
+			FileStream fs1 = new FileStream(f1, FileMode.Open);
+			FileStream fs2 = new FileStream(f2, FileMode.Open);
+
+			bool result = CompareFiles(fs1, fs2);
+
+			fs1.Close();
+			fs2.Close();
+			return result;
+		}
+		private static bool CompareFiles(Stream s1, Stream s2)
+		{
+			bool result = true;
+			if (s1.Length != s2.Length)
+				result = false;
+
+			while (s1.Position < s1.Length && result) {
+				if (s1.ReadByte() != s2.ReadByte())
+					result = false;
+			}
+
+			return result;
 		}
     }
 }

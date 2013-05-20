@@ -45,11 +45,19 @@ namespace Nftr
 		public void Write(Stream strOut)
 		{
 			BinaryWriter bw = new BinaryWriter(strOut);
+			long startPos = strOut.Position;
 
-			bw.Write(this.Name.ToCharArray());	// CHECK: Reversed?
+			bw.Write(this.Name.Reverse().ToArray());
 			bw.Write(this.Size);
 
 			this.WriteData(strOut);
+
+			strOut.Position = startPos + this.Size;
+			if (strOut.Position > strOut.Length)
+				strOut.Position = strOut.Length;
+
+			while (strOut.Position % 0x04 != 0)
+				strOut.WriteByte(0x00);
 		}
 
 		protected abstract void WriteData(Stream strOut);

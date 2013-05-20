@@ -28,6 +28,17 @@ namespace Nftr
 			this.blockTypes = blockTypes;
 		}
 
+		protected NitroFile(string fileIn, params Type[] blockTypes)
+			: this(blockTypes)
+		{
+			FileStream fs = new FileStream(fileIn, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+			this.Read(fs, (int)fs.Length);
+
+			fs.Dispose();
+			fs.Close();
+		}
+
 		protected virtual void Read(Stream strIn, int size)
 		{
 			long basePosition = strIn.Position;
@@ -71,6 +82,20 @@ namespace Nftr
 			}
 		}
 
+		public void Write(string fileOut)
+		{
+			if (File.Exists(fileOut))
+				File.Delete(fileOut);
+
+			FileStream fs = new FileStream(fileOut, FileMode.CreateNew,
+			                               FileAccess.Write, FileShare.Read);
+
+			this.Write(fs);
+
+			fs.Dispose();
+			fs.Close();
+		}
+
 		public virtual void Write(Stream strOut)
 		{
 			const ushort blocksStart = 0x10;
@@ -82,9 +107,9 @@ namespace Nftr
 			BinaryWriter bw = new BinaryWriter(strOut);
 
 			// Write header (need to be updated later)
-			bw.Write(this.magicStamp.ToCharArray());	// CHECK: Reversed?
-			bw.Write(this.Version);
+			bw.Write(this.magicStamp.Reverse().ToArray());
 			bw.Write(BomLittleEndiannes);
+			bw.Write(this.Version);
 			bw.Write(0x00);					// File size, unknown at the moment
 			bw.Write(blocksStart);
 			bw.Write((ushort)this.Blocks.Count);
@@ -100,8 +125,10 @@ namespace Nftr
 				strOut.Flush();
 
 				// Checks size
-				if (strOut.Position - blockPos != block.Size)
+				if (strOut.Length < blockPos + block.Size)
 					throw new InvalidDataException("Size does not match.");
+
+				strOut.Position = blockPos + block.Size;
 			}
 
 			// Update file size

@@ -137,7 +137,7 @@ namespace Nftr.Structure
 			bw.Write(this.OffsetGwdh);
 			bw.Write(this.OffsetCmap);
 
-			if (this.File.Version == 0x0102) {
+			if (this.File.VersionS == "1.2") {
 				bw.Write(this.GlyphHeight);
 				bw.Write(this.GlyphWidth);
 				bw.Write(this.BearingY);

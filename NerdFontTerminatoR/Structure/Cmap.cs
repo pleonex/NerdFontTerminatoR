@@ -91,7 +91,46 @@ namespace Nftr.Structure
 
 		protected override void WriteData(Stream strOut)
 		{
-			throw new NotImplementedException();
+			BinaryWriter bw = new BinaryWriter(strOut);
+			long startPos = strOut.Position;
+
+			bw.Write(this.FirstChar);
+			bw.Write(this.LastChar);
+			bw.Write(this.Type);
+			bw.Write(0x00);		// Not actually used
+
+			switch (this.Type) {
+			case 0:
+				bw.Write((ushort)this.Map[0, 1]);
+				break;
+
+			case 1:
+				for (int i = 0; i < this.Map.GetLength(0); i++) {
+					bw.Write((ushort)this.Map[i, 1]);
+				}
+				break;
+
+			case 2:
+				bw.Write((ushort)this.Map.GetLength(0));;
+				for (int i = 0; i < this.Map.GetLength(0); i++) {
+					bw.Write((ushort)this.Map[i, 0]);
+					bw.Write((ushort)this.Map[i, 1]);
+				}
+				break;
+			}
+
+			// Ok... Let's write it... but it won't work always and
+			//  games don't need it
+			if (this.NextCmap > 0) {
+				uint startNextPos = (uint)strOut.Position + 8; // Skip nitroblock header
+				if (startNextPos % 4 != 0)
+					startNextPos += 4 - (startNextPos % 4);
+
+				strOut.Position = startPos + 8;
+				bw.Write(startNextPos);
+			}
+
+			bw.Flush();
 		}
 
 		public override string Name {
