@@ -2,10 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Xml.Linq;
 
 namespace Nftr.Structure
 {
-	public enum RotationMode
+	public enum RotationMode : byte
 	{
 		Rot0 = 0,
 		Rot90 = 1,
@@ -20,6 +21,19 @@ namespace Nftr.Structure
 		public Cglp(NitroFile file)
 			: base(file)
 		{
+		}
+
+		public Cglp(NitroFile file, Colour[][,] glyphs, byte boxWidth, byte boxHeight,
+		            byte glyphWidth, byte glyphHeight, RotationMode depth, byte rotation)
+			: base(file)
+		{
+			this.BoxWidth = boxWidth;
+			this.BoxHeight = boxHeight;
+			this.GlyphWidth = glyphWidth;
+			this.GlyphHeight = glyphHeight;
+			this.Depth = (byte)depth;
+			this.Rotation = rotation;
+			this.glyphs = new List<Colour[,]>(glyphs);
 		}
 
 		#region Properties
@@ -139,6 +153,11 @@ namespace Nftr.Structure
 			} // End for glyph
 
 			bw.Flush();
+		}
+
+		public override bool Check()
+		{
+			throw new NotImplementedException();
 		}
 
 		public override string Name {

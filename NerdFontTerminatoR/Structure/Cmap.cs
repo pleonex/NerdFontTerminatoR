@@ -57,7 +57,7 @@ namespace Nftr.Structure
 			this.NextCmap = br.ReadUInt32();
 
 			// Read map
-			int numEntries = this.LastChar - this.FirstChar;
+			int numEntries = this.LastChar - this.FirstChar + 1;
 			this.Map = new int[numEntries, 2];
 
 			switch (this.Type) {
@@ -131,6 +131,11 @@ namespace Nftr.Structure
 			}
 
 			bw.Flush();
+		}
+
+		public override bool Check()
+		{
+			throw new NotImplementedException();
 		}
 
 		public override string Name {

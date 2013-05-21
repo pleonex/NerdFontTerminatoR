@@ -27,6 +27,11 @@ namespace Nftr.Structure
 			this.firstRegion.Write(strOut);
 		}
 
+		public override bool Check()
+		{
+			throw new NotImplementedException();
+		}
+
 		public override string Name {
 			get { return "CWDH"; }
 		}
@@ -64,6 +69,15 @@ namespace Nftr.Structure
 				gw.BearingX = (byte)strIn.ReadByte();
 				gw.Width = (byte)strIn.ReadByte();
 				gw.Advance = (byte)strIn.ReadByte();
+				return gw;
+			}
+
+			public static GlyphWidth FromXml(XElement node)
+			{
+				GlyphWidth gw = new GlyphWidth();
+				gw.BearingX = Convert.ToByte(node.Element("BearingX").Value);
+				gw.Width    = Convert.ToByte(node.Element("Width").Value);
+				gw.Advance  = Convert.ToByte(node.Element("Advance").Value);
 				return gw;
 			}
 

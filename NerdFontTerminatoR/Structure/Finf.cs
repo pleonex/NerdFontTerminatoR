@@ -148,6 +148,11 @@ namespace Nftr.Structure
 			bw = null;
 		}
 
+		public override bool Check()
+		{
+			throw new NotImplementedException();
+		}
+
 		public override string Name {
 			get { return "FINF"; }
 		}

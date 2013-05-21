@@ -144,10 +144,12 @@ namespace Nftr
 
 		public ushort Version {
 			get { return this.version; }
+			set { this.version = value; }
 		}
 
 		public string VersionS {
 			get { return (this.version >> 8).ToString() + "." + (this.version & 0xFF).ToString(); }
+			set { this.version = (ushort)((Convert.ToByte(value[0]) << 8) | (Convert.ToByte(value[2]))); }
 		}
 
 		public BlockCollection Blocks {

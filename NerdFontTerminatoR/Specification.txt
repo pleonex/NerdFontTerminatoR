@@ -25,7 +25,7 @@ Todos los offsets relativos apuntando a bloques omiten estos bytes.
 bloque FINF (Font INFo) 
 ----------------------- 
 Información genérica sobre la fuente.
-+ 1 byte ???, 0 
+[Check] 1 byte ???, always 0x00
 - 1 byte con la altura del glifo // Usada para cálculo de tamaño de cajas de texto
 - 2 bytes con el índice a la imagen del caracter de error.
 - 1 byte valor por defecto de bearing X
@@ -36,10 +36,10 @@ Información genérica sobre la fuente.
 - 4 bytes con el offset al bloque CWDH 
 - 4 bytes con el offset al primer bloque CMAP
 SI VERSIÓN 1.2:
-    - 1 byte con el Height (Glyp Metrics)
-    - 1 byte con el Width (Glyp Metrics)
-    - 1 byte con el Bearing Y (Glyp Metrics)
-    - 1 byte con el Bearing X (Glyp Metrics)
+    [Check] 1 byte con el Height (Glyp Metrics)
+    [Check] 1 byte con el Width (Glyp Metrics)
+    [Check] 1 byte con el Bearing Y (Glyp Metrics)
+    [Check] 1 byte con el Bearing X (Glyp Metrics)
     http://www.freetype.org/freetype2/docs/glyphs/glyphs-3.html
 
 
@@ -49,8 +49,8 @@ Aquí va la información de los glifos
 - 1 byte con la anchura del glifo 
 - 1 byte con la altura del glifo 
 - 2 bytes con la longitud del glifo en bytes 
-- 1 byte con el Height (Glyp Metrics) 
-- 1 byte con el Width (Glyp Metrics)
++ 1 byte con el Height (Glyp Metrics) 
++ 1 byte con el Width (Glyp Metrics)
 - 1 byte con los bpp 
 - 1 byte con la rotación (0,7/0º; 1,2/90º; 3,4/180º; 5,6/270º; >7/error) 
 Datos por cada glifo: 

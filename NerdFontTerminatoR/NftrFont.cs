@@ -59,10 +59,10 @@ namespace Nftr
         {
         }
 
-        public NftrFont(string xmlFontInfo, string glyphs)
+        public NftrFont(string xmlInfo, string glyphs)
 			: base(typeof(Finf), typeof(Cglp), typeof(Cwdh), typeof(Cmap))
         {
-			throw new NotImplementedException();
+			this.Import(xmlInfo, glyphs);
         }
 
         public static uint Header
@@ -79,16 +79,16 @@ namespace Nftr
 		{
 			base.Read(strIn, size);
 		
-			this.errorChar = this.Blocks.GetByType<Finf>(0).ErrorCharIndex;
-			this.encoding = this.Blocks.GetByType<Finf>(0).Encoding;
-			this.lineGap = this.Blocks.GetByType<Finf>(0).LineGap;
+			this.errorChar    = this.Blocks.GetByType<Finf>(0).ErrorCharIndex;
+			this.encoding     = this.Blocks.GetByType<Finf>(0).Encoding;
+			this.lineGap      = this.Blocks.GetByType<Finf>(0).LineGap;
 			this.defaultWidth = this.Blocks.GetByType<Finf>(0).DefaultWidth;
-			this.glyphHeight = this.Blocks.GetByType<Cglp>(0).GlyphHeight;
-			this.glyphWidth = this.Blocks.GetByType<Cglp>(0).GlyphWidth;
-			this.boxWidth = this.Blocks.GetByType<Cglp>(0).BoxWidth;
-			this.boxHeight = this.Blocks.GetByType<Cglp>(0).BoxHeight;
-			this.depth = this.Blocks.GetByType<Cglp>(0).Depth;
-			this.rotation = (RotationMode)this.Blocks.GetByType<Cglp>(0).Rotation;
+			this.glyphHeight  = this.Blocks.GetByType<Cglp>(0).GlyphHeight;
+			this.glyphWidth   = this.Blocks.GetByType<Cglp>(0).GlyphWidth;
+			this.boxWidth     = this.Blocks.GetByType<Cglp>(0).BoxWidth;
+			this.boxHeight    = this.Blocks.GetByType<Cglp>(0).BoxHeight;
+			this.depth        = this.Blocks.GetByType<Cglp>(0).Depth;
+			this.rotation     = (RotationMode)this.Blocks.GetByType<Cglp>(0).Rotation;
 
 			// Get glyphs info
 			this.glyphs = new List<Glyph>();
@@ -96,9 +96,9 @@ namespace Nftr
 				ushort charCode = this.SearchCharByImage(i);
 
 				Glyph g = new Glyph();
-				g.Id = i;
-				g.Image = this.Blocks.GetByType<Cglp>(0).GetGlyph(i);
-				g.Width = this.Blocks.GetByType<Cwdh>(0).GetWidth(charCode);
+				g.Id       = i;
+				g.Image    = this.Blocks.GetByType<Cglp>(0).GetGlyph(i);
+				g.Width    = this.Blocks.GetByType<Cwdh>(0).GetWidth(charCode);
 				g.CharCode = charCode;
 
 				this.glyphs.Add(g);
@@ -107,21 +107,19 @@ namespace Nftr
 
 		public void PrintInfo()
 		{
-			Console.WriteLine("Version: {0}", this.VersionS);
-			Console.WriteLine("Error char: {0}", this.errorChar);
-			Console.WriteLine("Encoding: {0}", this.encoding);
-			Console.WriteLine("Line gap: {0}", this.lineGap);
+			Console.WriteLine("Version:       {0}", this.VersionS);
+			Console.WriteLine("Error char:    {0}", this.errorChar);
+			Console.WriteLine("Encoding:      {0}", this.encoding);
+			Console.WriteLine("Line gap:      {0}", this.lineGap);
 			Console.WriteLine("Default width: {0}", this.defaultWidth);
-			Console.WriteLine("Glyph width: {0}", this.glyphWidth);
-			Console.WriteLine("Glyph height: {0}", this.glyphHeight);
-			Console.WriteLine("Box width: {0}", this.boxWidth);
-			Console.WriteLine("Box height: {0}", this.boxHeight);
-			Console.WriteLine("Depth: {0}", this.depth);
-			Console.WriteLine("Rotation: {0}", this.rotation);
-			Console.WriteLine("Chars read: {0}", this.glyphs.Count);
+			Console.WriteLine("Glyph width:   {0}", this.glyphWidth);
+			Console.WriteLine("Glyph height:  {0}", this.glyphHeight);
+			Console.WriteLine("Box width:     {0}", this.boxWidth);
+			Console.WriteLine("Box height:    {0}", this.boxHeight);
+			Console.WriteLine("Depth:         {0}", this.depth);
+			Console.WriteLine("Rotation:      {0}", this.rotation);
+			Console.WriteLine("Chars read:    {0}", this.glyphs.Count);
 		}
-
-		#region Export & Import
 
 		public void Export(string xmlPath, string imgPath)
 		{
@@ -270,7 +268,134 @@ namespace Nftr
 			image.Save(imgPath);
 		}
 
-		#endregion
+		private void Import(string xmlInfo, string glyphs)
+		{
+			XDocument doc = XDocument.Load(xmlInfo);
+			XElement root = doc.Element("NFTR");
+
+			this.VersionS = root.Element("Version").Value;
+
+			this.lineGap = byte.Parse(root.Element("LineGap").Value);
+			this.errorChar = ushort.Parse(root.Element("ErrorChar").Value);
+			this.defaultWidth = GWidth.FromXml(root.Element("DefaultWidth"));
+			this.boxWidth = byte.Parse(root.Element("BoxWidth").Value);
+			this.boxHeight = byte.Parse(root.Element("BoxHeight").Value);
+			this.glyphWidth = byte.Parse(root.Element("GlyphWidth").Value);
+			this.glyphHeight = byte.Parse(root.Element("GlyphHeight").Value);
+			this.rotation = (RotationMode)Enum.Parse(typeof(RotationMode), root.Element("Rotation").Value);
+			this.depth = byte.Parse(root.Element("Depth").Value);
+
+			// Get Glyphs
+
+			throw new NotImplementedException();
+		}
+
+		private void ImportMap()
+		{
+			throw new NotImplementedException();
+//			int numChars = font.plgc.tiles.Length;
+//
+//			// Get the image size
+//			int numColumns = (numChars < CHARS_PER_LINE) ? numChars : CHARS_PER_LINE;
+//			int numRows = (int)Math.Ceiling((double)numChars / numColumns);
+//
+//			int charWidth = font.plgc.tile_width + BORDER_WIDTH;
+//			int charHeight = font.plgc.tile_height + BORDER_WIDTH;
+//
+//			int width = numColumns * charWidth + BORDER_WIDTH;
+//			int height = numRows * charHeight + BORDER_WIDTH;
+//
+//			if (width != image.Width || height != image.Height)
+//			{
+//				System.Windows.Forms.MessageBox.Show("Incorrect size.");
+//				return;
+//			}
+//
+//			// Draw chars
+//			for (int i = 0; i < numRows; i++)
+//			{
+//				for (int j = 0; j < numColumns; j++)
+//				{
+//					int index = i * numColumns + j;
+//					if (index >= numChars)
+//						break;
+//
+//					int x = j * charWidth + BORDER_WIDTH;
+//					int y = i * charHeight + BORDER_WIDTH;
+//
+//					Bitmap charImg = image.Clone(new Rectangle(x, y, charWidth - BORDER_WIDTH, charHeight - BORDER_WIDTH),
+//					                             System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+//
+//					font.plgc.tiles[index] = SetChar(charImg, font.plgc.depth, palette);
+//				}
+//			}
+		}
+
+		private void CreateStructure()
+		{
+			Cglp cglp = new Cglp(
+				this,
+				null, // TODO
+				this.boxWidth,
+				this.boxHeight,
+				this.glyphWidth,
+				this.glyphHeight,
+				this.rotation,
+				this.depth);
+			if (!cglp.Check())
+				throw new InvalidDataException("Invalid data for CGLP.");
+			this.Blocks.Add(cglp);
+
+			// CWDH
+			Cwdh cwdh = null;
+			if (!cwdh.Check())
+				throw new InvalidDataException("Invalid data for CWDH.");
+			this.Blocks.Add(cwdh);
+
+			// CMAP
+			Cmap cmap = null;
+			if (!cmap.Check())
+				throw new InvalidDataException("Invalid data for CMAP.");
+			this.Blocks.Add(cmap);
+
+			// FINF
+			Finf finf = null;
+			if (!finf.Check())
+				throw new InvalidDataException("Invalid data for FINF.");
+			this.Blocks.Insert(0, finf);
+
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Its checks if the approximations done in the exporting are rights.
+		/// </summary>
+		public bool Check()
+		{
+			bool result = true;
+
+			Finf finf = this.Blocks.GetByType<Finf>(0);
+			Cglp cglp = this.Blocks.GetByType<Cglp>(0);
+
+			if (finf.Unknown != 0)
+				result = false;
+
+//			if (this.VersionS == "1.2") {
+//				if (finf.BearingX != finf.DefaultWidth.BearingX)
+//					result = false;
+//
+//				if (finf.BearingY != cglp.GlyphHeight)
+//					result = false;
+//
+//				if (finf.GlyphWidth != cglp.GlyphWidth)
+//					result = false;
+//
+//				if (finf.GlyphHeight != finf.LineGap)
+//					result = false;
+//			}
+
+			return result;
+		}
 
 		private string GetChar(int charCode)
 		{

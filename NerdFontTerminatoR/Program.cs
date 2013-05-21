@@ -56,19 +56,23 @@ namespace Nftr
 				foreach (string f in Directory.GetFiles(dir)) {
 					string fontOut = Path.Combine(fontDirOut, Path.GetFileNameWithoutExtension(f));
 					Console.WriteLine(fontOut);
-					if (File.Exists(fontOut + ".png"))
-						continue;
+					//if (File.Exists(fontOut + ".png"))
+					//	continue;
 
 					try {
 						NftrFont font = new NftrFont(f);
+						if (!font.Check())
+							return;
 						//font.Export(fontOut + ".xml", fontOut + ".png");
 
-						MemoryStream ms = new MemoryStream();
-						font.Write(ms);
-						if (!CompareFiles(ms, File.OpenRead(f)))
-							return;
+						//MemoryStream ms = new MemoryStream();
+						//font.Write(ms);
+						//font.Write(fontOut + ".new");
+						//if (!CompareFiles(fontOut + ".new", f))
+						//	return;
+					} catch (Exception ex) { 
+						Console.WriteLine("--> ERROR: {0}\n{1}", ex.Message, ex.StackTrace); 
 					}
-					catch { Console.WriteLine("--> ERROR"); }
 				}
 			}
 
