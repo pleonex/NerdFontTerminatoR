@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 
 namespace Nftr.Structure
 {
@@ -158,6 +159,23 @@ namespace Nftr.Structure
 		}
 
 		#endregion
+
+		public string GetChar(int charCode)
+		{
+			byte[] charCodeB = BitConverter.GetBytes((ushort)charCode);
+			if (this.Encoding == EncodingMode.SJIS &&
+			    charCodeB[1] != 0x00) {
+				charCodeB = charCodeB.Reverse().ToArray();
+			}
+
+			char ch = this.TextEncoding.GetChars(charCodeB)[0];
+
+			if (Char.IsLetterOrDigit(ch) || Char.IsPunctuation(ch) ||
+			    Char.IsSeparator(ch) || Char.IsSymbol(ch))
+				return ch.ToString();
+			else
+				return "";
+		}
 	}
 }
 

@@ -131,6 +131,7 @@ namespace Nftr
 		{
 			XDocument doc = new XDocument();
 			doc.Declaration = new XDeclaration("1.0", "utf-8", "yes");
+			doc.Add(new XComment(" Generated with NerdFontTerminatoR V0.1 ~~ by pleoNeX "));
 
 			XElement root = new XElement("NFTR");
 			doc.Add(root);
@@ -153,50 +154,7 @@ namespace Nftr
 			root.Add(cmapRoot);
 
 			foreach (Cmap cmap in this.Blocks.GetByType<Cmap>()) {
-				XElement xcmap = new XElement("Cmap");
-				cmapRoot.Add(xcmap);
-
-				xcmap.Add(new XElement("FirstChar", cmap.FirstChar.ToString("X")));
-				xcmap.Add(new XComment(" (" + this.GetChar(cmap.FirstChar) + ") "));
-				xcmap.Add(new XElement("LastChar", cmap.LastChar.ToString("X")));
-				xcmap.Add(new XComment(" (" + this.GetChar(cmap.LastChar) + ") "));
-				xcmap.Add(new XElement("Type", cmap.Type));
-
-				XElement map = new XElement("Map");
-				xcmap.Add(map);
-				switch (cmap.Type) {
-				case 0:
-					map.Add(new XElement("FirstImage", cmap.Map[0, 1]));
-					StringBuilder mapComment = new StringBuilder();
-					for (int i = 0; i < cmap.Map.GetLength(0); i++) {
-						if (i != 0 && i % 5 == 0)
-							mapComment.AppendLine();
-						mapComment.AppendFormat(" {0}:{1:X} ({2})  ",
-						                  cmap.Map[i, 1], cmap.Map[i, 0], this.GetChar(cmap.Map[i, 0]));
-					}
-					map.Add(new XComment(mapComment.ToString()));
-					break;
-
-				case 1:
-					for (int i = 0; i < cmap.Map.GetLength(0); i++) {
-						XElement ximg = new XElement("Image", cmap.Map[i, 1]);
-						map.Add(new XComment(string.Format(
-							" {0:X} ({1}) ",
-						    cmap.Map[i, 0],
-							this.GetChar(cmap.Map[i, 0]))));
-						map.Add(ximg);
-					}
-					break;
-
-				case 2:
-					for (int i = 0; i < cmap.Map.GetLength(0); i++) {
-						XElement xchar = new XElement("Entry");
-						xchar.Add(new XElement("Image", cmap.Map[i, 1]));
-						xchar.Add(new XElement("Char", cmap.Map[i, 0].ToString("X")));
-						xchar.Add(new XComment(" (" + this.GetChar(cmap.Map[i, 0]) + ") "));
-					}
-					break;
-				}
+				cmapRoot.Add(cmap.Export());
 			}
 
 			// Export widths
@@ -209,12 +167,14 @@ namespace Nftr
 				xwidth.Add(new XComment(string.Format(
 					" {0:X} ({1}) ", 
 					g.CharCode,
-					this.GetChar(g.CharCode))));
+					this.Blocks.GetByType<Finf>(0).GetChar(g.CharCode))));
 				widthsRoot.Add(xwidth);
 			}
 
-			if (File.Exists(xmlPath))
+			if (File.Exists(xmlPath)) {
 				File.Delete(xmlPath);
+			}
+
 			doc.Save(xmlPath);
 		}
 
@@ -235,6 +195,9 @@ namespace Nftr
 		public void ExportMap(string imgPath, int charWidth, int charHeight, 
 		                      int numRows, int numColumns, int zoom)
 		{
+			if (zoom != 1)
+				throw new NotImplementedException();
+
 			int numChars = this.glyphs.Count;
 			int width = numColumns * charWidth + BorderWidth;
 			int height = numRows * charHeight + BorderWidth;
@@ -275,73 +238,71 @@ namespace Nftr
 
 			this.VersionS = root.Element("Version").Value;
 
-			this.lineGap = byte.Parse(root.Element("LineGap").Value);
-			this.errorChar = ushort.Parse(root.Element("ErrorChar").Value);
+			this.lineGap      = byte.Parse(root.Element("LineGap").Value);
+			this.errorChar    = ushort.Parse(root.Element("ErrorChar").Value);
 			this.defaultWidth = GWidth.FromXml(root.Element("DefaultWidth"));
-			this.boxWidth = byte.Parse(root.Element("BoxWidth").Value);
-			this.boxHeight = byte.Parse(root.Element("BoxHeight").Value);
-			this.glyphWidth = byte.Parse(root.Element("GlyphWidth").Value);
-			this.glyphHeight = byte.Parse(root.Element("GlyphHeight").Value);
-			this.rotation = (RotationMode)Enum.Parse(typeof(RotationMode), root.Element("Rotation").Value);
-			this.depth = byte.Parse(root.Element("Depth").Value);
+			this.boxWidth     = byte.Parse(root.Element("BoxWidth").Value);
+			this.boxHeight    = byte.Parse(root.Element("BoxHeight").Value);
+			this.glyphWidth   = byte.Parse(root.Element("GlyphWidth").Value);
+			this.glyphHeight  = byte.Parse(root.Element("GlyphHeight").Value);
+			this.rotation     = (RotationMode)Enum.Parse(typeof(RotationMode), root.Element("Rotation").Value);
+			this.depth        = byte.Parse(root.Element("Depth").Value);
 
-			// Get Glyphs
+			// TODO: Get Glyphs
 
+
+			this.CreateStructure(doc);
 			throw new NotImplementedException();
 		}
 
-		private void ImportMap()
+		private Colour[,] CharFromMap(Bitmap img, int glyphIdx)
 		{
-			throw new NotImplementedException();
-//			int numChars = font.plgc.tiles.Length;
-//
-//			// Get the image size
-//			int numColumns = (numChars < CHARS_PER_LINE) ? numChars : CHARS_PER_LINE;
-//			int numRows = (int)Math.Ceiling((double)numChars / numColumns);
-//
-//			int charWidth = font.plgc.tile_width + BORDER_WIDTH;
-//			int charHeight = font.plgc.tile_height + BORDER_WIDTH;
-//
-//			int width = numColumns * charWidth + BORDER_WIDTH;
-//			int height = numRows * charHeight + BORDER_WIDTH;
-//
-//			if (width != image.Width || height != image.Height)
-//			{
-//				System.Windows.Forms.MessageBox.Show("Incorrect size.");
-//				return;
-//			}
-//
-//			// Draw chars
-//			for (int i = 0; i < numRows; i++)
-//			{
-//				for (int j = 0; j < numColumns; j++)
-//				{
-//					int index = i * numColumns + j;
-//					if (index >= numChars)
-//						break;
-//
-//					int x = j * charWidth + BORDER_WIDTH;
-//					int y = i * charHeight + BORDER_WIDTH;
-//
-//					Bitmap charImg = image.Clone(new Rectangle(x, y, charWidth - BORDER_WIDTH, charHeight - BORDER_WIDTH),
-//					                             System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-//
-//					font.plgc.tiles[index] = SetChar(charImg, font.plgc.depth, palette);
-//				}
-//			}
+			int numChars = this.glyphs.Count;
+
+			// Get the image size
+			int numColumns = (numChars < CharsPerLine) ? numChars : CharsPerLine;
+			int numRows = (int)Math.Ceiling((double)numChars / numColumns);
+
+			int charWidth = this.boxWidth + BorderWidth;
+			int charHeight = this.boxHeight + BorderWidth;
+
+			return this.CharFromMap(img, glyphIdx, charWidth, charHeight, numRows, numColumns, 1);
 		}
 
-		private void CreateStructure()
+		private Colour[,] CharFromMap(Bitmap img, int glyphIdx, int charWidth, int charHeight,
+		                              int numRows, int numColumns, int zoom)
 		{
-			Cglp cglp = new Cglp(
-				this,
-				null, // TODO
-				this.boxWidth,
-				this.boxHeight,
-				this.glyphWidth,
-				this.glyphHeight,
-				this.rotation,
-				this.depth);
+			if (zoom != 1)
+				throw new NotImplementedException();
+
+			int width = numColumns * charWidth + BorderWidth;
+			int height = numRows * charHeight + BorderWidth;
+			
+			if (width != img.Width || height != img.Height)
+			{
+				throw new FormatException("Incorrect size.");
+			}
+
+			Colour[,] glyph = new Colour[this.boxWidth, this.boxHeight];
+			int startX = (glyphIdx % numRows) * charWidth + BorderWidth;
+			int startY = (glyphIdx / numRows) * charHeight + BorderWidth;
+			for (int x = startX, gx = 0; x < startX + charWidth; x += zoom, gx++) {
+				for (int y = startY, gy = 0; y < startY + charHeight; y += zoom, gy++) {
+					glyph[gx, gy] = Colour.FromColor(img.GetPixel(x, y));
+				}
+			}
+			return glyph;
+		}
+
+		private void CreateStructure(XDocument xml)
+		{
+			// CGLP
+			Colour[][,] glyphs = new Colour[this.glyphs.Count][,];
+			for (int i = 0; i < this.glyphs.Count; i++)
+				glyphs[i] = this.glyphs[i].Image;
+
+			Cglp cglp = new Cglp(this, glyphs, this.boxWidth, this.boxHeight,
+			                     this.glyphWidth, this.glyphHeight, this.rotation, this.depth);
 			if (!cglp.Check())
 				throw new InvalidDataException("Invalid data for CGLP.");
 			this.Blocks.Add(cglp);
@@ -353,10 +314,12 @@ namespace Nftr
 			this.Blocks.Add(cwdh);
 
 			// CMAP
-			Cmap cmap = null;
-			if (!cmap.Check())
-				throw new InvalidDataException("Invalid data for CMAP.");
-			this.Blocks.Add(cmap);
+			foreach (XElement node in xml.Element("NFTR").Elements("Cmap")) {
+				Cmap cmap = new Cmap(this, node);
+				if (!cmap.Check())
+					throw new InvalidDataException("Invalid data for CMAP.");
+				this.Blocks.Add(cmap);
+			}
 
 			// FINF
 			Finf finf = null;
@@ -375,7 +338,7 @@ namespace Nftr
 			bool result = true;
 
 			Finf finf = this.Blocks.GetByType<Finf>(0);
-			Cglp cglp = this.Blocks.GetByType<Cglp>(0);
+			//Cglp cglp = this.Blocks.GetByType<Cglp>(0);
 
 			if (finf.Unknown != 0)
 				result = false;
@@ -395,23 +358,6 @@ namespace Nftr
 //			}
 
 			return result;
-		}
-
-		private string GetChar(int charCode)
-		{
-			byte[] charCodeB = BitConverter.GetBytes((ushort)charCode);
-			if (this.Blocks.GetByType<Finf>(0).Encoding == EncodingMode.SJIS &&
-				charCodeB[1] != 0x00) {
-				charCodeB = charCodeB.Reverse().ToArray();
-			}
-
-			char ch = this.Blocks.GetByType<Finf>(0).TextEncoding.GetChars(charCodeB)[0];
-
-			if (Char.IsLetterOrDigit(ch) || Char.IsPunctuation(ch) ||
-			    Char.IsSeparator(ch) || Char.IsSymbol(ch))
-				return ch.ToString();
-			else
-				return "";
 		}
 
 		private ushort SearchCharByImage(int index)

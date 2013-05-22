@@ -49,6 +49,11 @@ namespace Nftr
             private set;
         }
 
+		public static Colour FromColor(System.Drawing.Color c)
+		{
+			return new Colour(c.R, c.G, c.B);
+		}
+
 		public override bool Equals(object obj)
 		{
 			if (obj == null)
