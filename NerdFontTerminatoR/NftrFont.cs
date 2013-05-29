@@ -35,9 +35,9 @@ namespace Nftr
     public class NftrFont : NitroFile
     {
 		private const int CharsPerLine = 16;
-		private const int BorderWidth = 2;
+		private const int BorderThickness = 2;
 		private static readonly ushort[] Versions = { 0100, 0101, 0102 };   // 1.0, 1.1 and 1.2
-		private static readonly Pen BorderPen = new Pen(Color.Olive, BorderWidth);
+		private static readonly Pen BorderPen = new Pen(Color.Olive, BorderThickness);
 
 		// Blocks
 		private Finf finf;
@@ -198,57 +198,72 @@ namespace Nftr
 			doc.Save(xmlPath);
 		}
 
+		/// <summary>
+		/// Export all glyphs in a image using default settings.
+		/// </summary>
+		/// <param name="imgPath">Image path to draw glyphs.</param>
 		public void ExportMap(string imgPath)
 		{
 			int numChars = this.glyphs.Count;
-
-			// Get the image size
+	
+			// Gets the number of columns and rows from the CharsPerLine value.
 			int numColumns = (numChars < CharsPerLine) ? numChars : CharsPerLine;
-			int numRows = (int)Math.Ceiling((double)numChars / numColumns);
+			int numRows    = (int)Math.Ceiling((double)numChars / numColumns);
 
-			int charWidth = this.boxWidth + BorderWidth;
-			int charHeight = this.boxHeight + BorderWidth;
-
-			this.ExportMap(imgPath, charWidth, charHeight, numRows, numColumns, 1);
+			this.ExportMap(
+				imgPath,
+				this.boxWidth, this.boxHeight, numRows, numColumns,
+				1, BorderThickness, BorderPen);
 		}
 
-		public void ExportMap(string imgPath, int charWidth, int charHeight, 
-		                      int numRows, int numColumns, int zoom)
+		public void ExportMap(string imgPath, int charWidth, int charHeight, int numRows, int numColumns,
+		                      int zoom, int borderThickness, Pen borderPen)
 		{
 			if (zoom != 1)
 				throw new NotImplementedException();
 
 			int numChars = this.glyphs.Count;
-			int width = numColumns * charWidth + BorderWidth;
-			int height = numRows * charHeight + BorderWidth;
+
+			// Char width + border from one side + border from the other side only at the end
+			int width    = numColumns * charWidth  + (numColumns + 1) * borderThickness;
+			int height   = numRows    * charHeight + (numRows + 1 )   * borderThickness;
 
 			Bitmap image = new Bitmap(width, height);
 			Graphics graphic = Graphics.FromImage(image);
 
 			// Draw chars
-			for (int i = 0; i < numRows; i++)
-			{
-				for (int j = 0; j < numColumns; j++)
-				{
-					int index = i * numColumns + j;
+			for (int r = 0; r < numRows; r++) {
+				for (int c = 0; c < numColumns; c++) {
+
+					int index = r * numColumns + c;	// Index of the glyph
 					if (index >= numChars)
 						break;
 
-					int x = j * charWidth + BorderWidth;
-					int y = i * charHeight + BorderWidth;
+					// Gets coordinates
+					int x = c * (charWidth  + borderThickness);
+					int y = r * (charHeight + borderThickness);
 
-					int align = BorderWidth - (BorderWidth / 2);
-					graphic.DrawRectangle(BorderPen, x - align, y - align, charWidth, charHeight);
-					graphic.DrawImage(this.glyphs[index].ToImage(zoom), x, y);
+					// Alignment due to rectangle drawing method.
+					int borderAlign = (int)System.Math.Floor(borderThickness / 2.0) + (1 - (borderThickness % 2));
+
+					if (borderThickness > 0) {
+						graphic.DrawRectangle(
+							borderPen,
+						    x + borderAlign,
+						    y + borderAlign,
+							charWidth  + borderThickness,
+							charHeight + borderThickness);
+					}
+
+					graphic.DrawImage(this.glyphs[index].ToImage(zoom), x + borderThickness, y + borderThickness);
 				}
 			}
 
 			graphic.Dispose();
-			graphic = null;
 
 			if (File.Exists(imgPath))
 				File.Delete(imgPath);
-			image.Save(imgPath);
+			image.Save(imgPath, System.Drawing.Imaging.ImageFormat.Png);
 		}
 
 		private void Import(string xmlInfo, string glyphs)
@@ -283,8 +298,8 @@ namespace Nftr
 			int numColumns = (numChars < CharsPerLine) ? numChars : CharsPerLine;
 			int numRows = (int)Math.Ceiling((double)numChars / numColumns);
 
-			int charWidth = this.boxWidth + BorderWidth;
-			int charHeight = this.boxHeight + BorderWidth;
+			int charWidth = this.boxWidth + BorderThickness;
+			int charHeight = this.boxHeight + BorderThickness;
 
 			return this.CharFromMap(img, glyphIdx, charWidth, charHeight, numRows, numColumns, 1);
 		}
@@ -295,8 +310,8 @@ namespace Nftr
 			if (zoom != 1)
 				throw new NotImplementedException();
 
-			int width = numColumns * charWidth + BorderWidth;
-			int height = numRows * charHeight + BorderWidth;
+			int width = numColumns * charWidth + BorderThickness;
+			int height = numRows * charHeight + BorderThickness;
 			
 			if (width != img.Width || height != img.Height)
 			{
@@ -304,8 +319,8 @@ namespace Nftr
 			}
 
 			Colour[,] glyph = new Colour[this.boxWidth, this.boxHeight];
-			int startX = (glyphIdx % numRows) * charWidth + BorderWidth;
-			int startY = (glyphIdx / numRows) * charHeight + BorderWidth;
+			int startX = (glyphIdx % numRows) * charWidth + BorderThickness;
+			int startY = (glyphIdx / numRows) * charHeight + BorderThickness;
 			for (int x = startX, gx = 0; x < startX + charWidth; x += zoom, gx++) {
 				for (int y = startY, gy = 0; y < startY + charHeight; y += zoom, gy++) {
 					glyph[gx, gy] = Colour.FromColor(img.GetPixel(x, y));
