@@ -39,6 +39,10 @@ namespace Nftr.Structure
 
 		#endregion
 
+		public WidthRegion FirstRegion {
+			get { return this.firstRegion; }
+		}
+
 		public GlyphWidth GetWidth(ushort charCode)
 		{
 			return this.firstRegion.GetWidth(charCode);
@@ -114,7 +118,7 @@ namespace Nftr.Structure
 			}
 		}
 
-		private class WidthRegion
+		public class WidthRegion
 		{
 			private static int IdWidth = 0;
 

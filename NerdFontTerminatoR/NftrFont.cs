@@ -165,9 +165,8 @@ namespace Nftr
 			root.Add(new XElement("Rotation", this.rotation));
 			root.Add(new XElement("Encoding", this.encoding));
 
-			XElement xcmap = new XElement("Maps");
+			XElement xcmap = new XElement("Maps");						// Remove in basic export mode
 			root.Add(xcmap);
-
 			foreach (Cmap cmap in this.cmaps) {
 				XElement xmap = new XElement("Map");
 				xcmap.Add(xmap);
@@ -176,6 +175,20 @@ namespace Nftr
 				xmap.Add(new XElement("FirstChar", cmap.FirstChar.ToString("X")));
 				xmap.Add(new XElement("LastChar", cmap.LastChar.ToString("X")));
 				xmap.Add(new XElement("Type", cmap.Type));
+			}
+
+			XElement xcwdh = new XElement("Widths");					// Remove in basic export mode
+			root.Add(xcwdh);
+			Cwdh.WidthRegion wr = this.cwdh.FirstRegion;
+			while (wr != null) {
+				XElement xwidthreg = new XElement("Region");
+				xcwdh.Add(xwidthreg);
+
+				xwidthreg.Add(new XElement("Id", wr.Id));
+				xwidthreg.Add(new XElement("FirstChar", wr.FirstChar.ToString("X")));
+				xwidthreg.Add(new XElement("LastChar", wr.LastChar.ToString("X")));
+
+				wr = wr.NextRegion;
 			}
 
 			XElement glyphs = new XElement("Glyphs");
@@ -213,16 +226,27 @@ namespace Nftr
 			this.ExportMap(
 				imgPath,
 				this.boxWidth, this.boxHeight, numRows, numColumns,
-				1, BorderThickness, BorderPen);
+				1, BorderPen);
 		}
 
+		/// <summary>
+		/// Exports all glyphs in a image.
+		/// </summary>
+		/// <param name="imgPath">Image path to draw glyphs.</param>
+		/// <param name="charWidth">Char width.</param>
+		/// <param name="charHeight">Char height.</param>
+		/// <param name="numRows">Number of rows.</param>
+		/// <param name="numColumns">Number of columns.</param>
+		/// <param name="zoom">Zoom.</param>
+		/// <param name="borderPen">Pen used to draw the border.</param>
 		public void ExportMap(string imgPath, int charWidth, int charHeight, int numRows, int numColumns,
-		                      int zoom, int borderThickness, Pen borderPen)
+		                      int zoom, Pen borderPen)
 		{
 			if (zoom != 1)
 				throw new NotImplementedException();
 
 			int numChars = this.glyphs.Count;
+			int borderThickness = (int)borderPen.Width;
 
 			// Char width + border from one side + border from the other side only at the end
 			int width    = numColumns * charWidth  + (numColumns + 1) * borderThickness;
