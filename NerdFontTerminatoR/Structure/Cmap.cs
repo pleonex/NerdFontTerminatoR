@@ -8,13 +8,26 @@ namespace Nftr.Structure
 {
 	public class Cmap : NitroBlock
 	{
+		private static int IdMap = 0;
+
+		public Cmap(NitroFile file) : base(file)
+		{
+			this.Id = IdMap++;
+		}
+
 		public Cmap(NitroFile file, XElement node)
 			: base(file)
 		{
+			this.Id = IdMap++;
 			this.Import(node);
 		}
 
 		#region Properties
+
+		public int Id {
+			get;
+			private set;
+		}
 
 		public ushort FirstChar {
 			get;
@@ -49,6 +62,11 @@ namespace Nftr.Structure
 
 		#endregion
 
+		public static void ResetCount()
+		{
+			IdMap = 0;
+		}
+
 		#region implemented abstract members of NitroBlock
 
 		protected override void ReadData(Stream strIn)
@@ -74,10 +92,19 @@ namespace Nftr.Structure
 				break;
 
 			case 1:
+				List<Tuple<int, int>> map = new List<Tuple<int, int>>();
 				for (int i = 0; i < numEntries; i++) {
-					this.Map[i, 0] = this.FirstChar + i;
-					this.Map[i, 1] = br.ReadUInt16();
+					ushort gidx = br.ReadUInt16();
+					if (gidx != 0xFFFF)
+						map.Add(Tuple.Create<int, int>(this.FirstChar + i, gidx));
 				}
+
+				this.Map = new int[map.Count, 2];
+				for (int i = 0; i < this.Map.GetLength(0); i++) {
+					this.Map[i, 0] = map[i].Item1;
+					this.Map[i, 1] = map[i].Item2;
+				}
+
 				break;
 
 			case 2:

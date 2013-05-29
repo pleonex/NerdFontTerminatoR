@@ -87,6 +87,7 @@
     <Compile Include="Structure\NitroFile.cs" />
     <Compile Include="NftrFont.cs" />
     <None Include="Specification.txt" />
+    <Compile Include="Glyph.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="font.ico" />

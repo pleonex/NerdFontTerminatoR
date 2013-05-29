@@ -11,6 +11,7 @@ namespace Nftr.Structure
 		public Cwdh(NitroFile file)
 			: base(file)
 		{
+			WidthRegion.ResetCount();
 		}
 
 		#region implemented abstract members of NitroBlock
@@ -45,6 +46,11 @@ namespace Nftr.Structure
 
 		public struct GlyphWidth
 		{
+			public int IdRegion {
+				get;
+				private set;
+			}
+
 			public byte BearingX
 			{
 				get;
@@ -63,18 +69,20 @@ namespace Nftr.Structure
 				private set;
 			}
 
-			public static GlyphWidth FromStream(Stream strIn)
+			public static GlyphWidth FromStream(Stream strIn, int idRegion)
 			{
 				GlyphWidth gw = new GlyphWidth();
+				gw.IdRegion = idRegion;
 				gw.BearingX = (byte)strIn.ReadByte();
-				gw.Width = (byte)strIn.ReadByte();
-				gw.Advance = (byte)strIn.ReadByte();
+				gw.Width    = (byte)strIn.ReadByte();
+				gw.Advance  = (byte)strIn.ReadByte();
 				return gw;
 			}
 
 			public static GlyphWidth FromXml(XElement node)
 			{
 				GlyphWidth gw = new GlyphWidth();
+				gw.IdRegion = Convert.ToInt32(node.Element("IdRegion").Value);
 				gw.BearingX = Convert.ToByte(node.Element("BearingX").Value);
 				gw.Width    = Convert.ToByte(node.Element("Width").Value);
 				gw.Advance  = Convert.ToByte(node.Element("Advance").Value);
@@ -92,6 +100,7 @@ namespace Nftr.Structure
 			public XElement Export(string name)
 			{
 				XElement el = new XElement(name);
+				el.Add(new XElement("IdRegion", this.IdRegion));
 				el.Add(new XElement("BearingX", this.BearingX));
 				el.Add(new XElement("Width", this.Width));
 				el.Add(new XElement("Advance", this.Advance));
@@ -100,18 +109,26 @@ namespace Nftr.Structure
 
 			public override string ToString()
 			{
-				return string.Format("[BearingX={0}, Width={1}, Advance={2}]",
-				                     BearingX, Width, Advance);
+				return string.Format("[Id={0}, BearingX={1}, Width={2}, Advance={3}]",
+				                     this.IdRegion, this.BearingX, this.Width, this.Advance);
 			}
 		}
 
 		private class WidthRegion
 		{
+			private static int IdWidth = 0;
+
 			private GlyphWidth defaultWidth;
 
 			public WidthRegion(GlyphWidth defaultWidth)
 			{
+				this.Id = IdWidth++;
 				this.defaultWidth = defaultWidth;
+			}
+
+			public int Id {
+				get;
+				set;
 			}
 
 			public ushort FirstChar {
@@ -134,6 +151,11 @@ namespace Nftr.Structure
 				set;
 			}
 
+			public static void ResetCount()
+			{
+				IdWidth = 0;
+			}
+
 			public static WidthRegion FromStream(Stream strIn, GlyphWidth defaultWidth)
 			{
 				BinaryReader br = new BinaryReader(strIn);
@@ -149,7 +171,7 @@ namespace Nftr.Structure
 				wr.Widths = new GlyphWidth[numWidths];
 
 				for (int i = 0; i < numWidths; i++) {
-					wr.Widths[i] = GlyphWidth.FromStream(strIn);
+					wr.Widths[i] = GlyphWidth.FromStream(strIn, wr.Id);
 				}
 
 				br = null;

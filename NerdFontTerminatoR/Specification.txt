@@ -105,6 +105,8 @@ notas
 
 * Se podrían incluir nuevas secciones y que el archivo siga siendo procesado correctamente. El único requisito es que comience con el formato: 4 bytes indicando tipo + 4 bytes indicando su longitud (sin tener en cuenta los del tipo).
 
+* Para la codificación UTF8, los códigos de caracteres de la diferentes secciones del archivo NFTR están en UNICODE pero el texto del juego (que más tarde se le pasará a la clase NFTR para obtener el glifo) están en UFT8.
+
 ----------------------- 
 Información elaborada por CUE con la colaboracón de Lyan53 y pleonex.
 Actuación por pleonex a 01/05/2013

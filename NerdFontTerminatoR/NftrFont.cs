@@ -39,13 +39,20 @@ namespace Nftr
 		private static readonly ushort[] Versions = { 0100, 0101, 0102 };   // 1.0, 1.1 and 1.2
 		private static readonly Pen BorderPen = new Pen(Color.Olive, BorderWidth);
 
+		// Blocks
+		private Finf finf;
+		private Cglp cglp;
+		private Cwdh cwdh;
+		private Cmap[] cmaps;
+
+		// Font data
         private List<Glyph>  glyphs;
         private byte         depth;
         private ushort       errorChar;
         private RotationMode rotation; 
         private EncodingMode encoding;
 
-        // Size variables
+        // ... Size variables
         private byte   lineGap;
         private byte   boxWidth;
         private byte   boxHeight;
@@ -57,12 +64,14 @@ namespace Nftr
         public NftrFont(string nftrPath)
 			: base(nftrPath, typeof(Finf), typeof(Cglp), typeof(Cwdh), typeof(Cmap))
         {
+			Cmap.ResetCount();
         }
 
         public NftrFont(string xmlInfo, string glyphs)
 			: base(typeof(Finf), typeof(Cglp), typeof(Cwdh), typeof(Cmap))
         {
 			this.Import(xmlInfo, glyphs);
+			Cmap.ResetCount();
         }
 
         public static uint Header
@@ -79,28 +88,35 @@ namespace Nftr
 		{
 			base.Read(strIn, size);
 		
-			this.errorChar    = this.Blocks.GetByType<Finf>(0).ErrorCharIndex;
-			this.encoding     = this.Blocks.GetByType<Finf>(0).Encoding;
-			this.lineGap      = this.Blocks.GetByType<Finf>(0).LineGap;
-			this.defaultWidth = this.Blocks.GetByType<Finf>(0).DefaultWidth;
-			this.glyphHeight  = this.Blocks.GetByType<Cglp>(0).GlyphHeight;
-			this.glyphWidth   = this.Blocks.GetByType<Cglp>(0).GlyphWidth;
-			this.boxWidth     = this.Blocks.GetByType<Cglp>(0).BoxWidth;
-			this.boxHeight    = this.Blocks.GetByType<Cglp>(0).BoxHeight;
-			this.depth        = this.Blocks.GetByType<Cglp>(0).Depth;
-			this.rotation     = (RotationMode)this.Blocks.GetByType<Cglp>(0).Rotation;
+			this.finf  = this.Blocks.GetByType<Finf>(0);
+			this.cglp  = this.Blocks.GetByType<Cglp>(0);
+			this.cwdh  = this.Blocks.GetByType<Cwdh>(0);
+			this.cmaps = this.Blocks.GetByType<Cmap>().ToArray();
+
+			this.errorChar    = this.finf.ErrorCharIndex;
+			this.encoding     = this.finf.Encoding;
+			this.lineGap      = this.finf.LineGap;
+			this.defaultWidth = this.finf.DefaultWidth;
+			this.glyphHeight  = this.cglp.GlyphHeight;
+			this.glyphWidth   = this.cglp.GlyphWidth;
+			this.boxWidth     = this.cglp.BoxWidth;
+			this.boxHeight    = this.cglp.BoxHeight;
+			this.depth        = this.cglp.Depth;
+			this.rotation     = (RotationMode)this.cglp.Rotation;
 
 			// Get glyphs info
 			this.glyphs = new List<Glyph>();
-			for (int i = 0; i < this.Blocks.GetByType<Cglp>(0).NumGlyphs; i++) {
-				ushort charCode = this.SearchCharByImage(i);
+			for (int i = 0; i < this.cglp.NumGlyphs; i++) {
+				int idMap;
+				ushort charCode = this.SearchCharByImage(i, out idMap);
 
 				Glyph g = new Glyph();
 				g.Id       = i;
-				g.Image    = this.Blocks.GetByType<Cglp>(0).GetGlyph(i);
-				g.Width    = this.Blocks.GetByType<Cwdh>(0).GetWidth(charCode);
+				g.Image    = this.cglp.GetGlyph(i);
+				g.Width    = this.cwdh.GetWidth(charCode);
 				g.CharCode = charCode;
-
+				g.IdMap    = idMap;
+			
 				this.glyphs.Add(g);
 			}
 		}
@@ -138,37 +154,41 @@ namespace Nftr
 
 			// Export general info
 			root.Add(new XElement("Version", this.VersionS));
-			root.Add(new XElement("LineGap", this.lineGap));
-			root.Add(new XElement("BoxWidth", this.boxWidth));
-			root.Add(new XElement("BoxHeight", this.boxHeight));
-			root.Add(new XElement("GlyphWidth", this.glyphWidth));
-			root.Add(new XElement("GlyphHeight", this.glyphHeight));
-			root.Add(this.defaultWidth.Export("DefaultWidth"));
-			root.Add(new XElement("ErrorChar", this.errorChar));
-			root.Add(new XElement("Depth", this.depth));
+			root.Add(new XElement("LineGap", this.lineGap));			// Remove in basic export mode
+			root.Add(new XElement("BoxWidth", this.boxWidth));			// Remove in basic export mode
+			root.Add(new XElement("BoxHeight", this.boxHeight));		// Remove in basic export mode
+			root.Add(new XElement("GlyphWidth", this.glyphWidth));		// Remove in basic export mode
+			root.Add(new XElement("GlyphHeight", this.glyphHeight));	// Remove in basic export mode
+			root.Add(this.defaultWidth.Export("DefaultWidth"));			// Remove in basic export mode
+			root.Add(new XElement("ErrorChar", this.errorChar));		
+			root.Add(new XElement("Depth", this.depth));				// Remove in basic export mode
 			root.Add(new XElement("Rotation", this.rotation));
 			root.Add(new XElement("Encoding", this.encoding));
 
-			// Export glyph info
-			XElement cmapRoot = new XElement("CharacterMaps");
-			root.Add(cmapRoot);
+			XElement xcmap = new XElement("Maps");
+			root.Add(xcmap);
 
-			foreach (Cmap cmap in this.Blocks.GetByType<Cmap>()) {
-				cmapRoot.Add(cmap.Export());
+			foreach (Cmap cmap in this.cmaps) {
+				XElement xmap = new XElement("Map");
+				xcmap.Add(xmap);
+
+				xmap.Add(new XElement("Id", cmap.Id));
+				xmap.Add(new XElement("FirstChar", cmap.FirstChar.ToString("X")));
+				xmap.Add(new XElement("LastChar", cmap.LastChar.ToString("X")));
+				xmap.Add(new XElement("Type", cmap.Type));
 			}
 
-			// Export widths
-			XElement widthsRoot = new XElement("CharacterWidths");
-			root.Add(widthsRoot);
-
+			XElement glyphs = new XElement("Glyphs");
+			root.Add(glyphs);
 			foreach (Glyph g in this.glyphs) {
-				XElement xwidth = g.Width.Export("CWidth");
-				xwidth.SetAttributeValue("Id", g.Id);
-				xwidth.Add(new XComment(string.Format(
-					" {0:X} ({1}) ", 
-					g.CharCode,
-					this.Blocks.GetByType<Finf>(0).GetChar(g.CharCode))));
-				widthsRoot.Add(xwidth);
+				XElement xg = new XElement("Glyph");
+				glyphs.Add(xg);
+
+				xg.Add(new XComment(string.Format(" ({0}) ", this.finf.GetChar(g.CharCode))));
+				xg.Add(new XElement("Id", g.Id));
+				xg.Add(g.Width.Export("Width"));						// Remove in basic export mode
+				xg.Add(new XElement("Code", g.CharCode.ToString("X")));	// Remove in basic export mode
+				xg.Add(new XElement("IdMap", g.IdMap));					// Remove in basic export mode
 			}
 
 			if (File.Exists(xmlPath)) {
@@ -301,14 +321,14 @@ namespace Nftr
 			for (int i = 0; i < this.glyphs.Count; i++)
 				glyphs[i] = this.glyphs[i].Image;
 
-			Cglp cglp = new Cglp(this, glyphs, this.boxWidth, this.boxHeight,
+			this.cglp = new Cglp(this, glyphs, this.boxWidth, this.boxHeight,
 			                     this.glyphWidth, this.glyphHeight, this.rotation, this.depth);
 			if (!cglp.Check())
 				throw new InvalidDataException("Invalid data for CGLP.");
 			this.Blocks.Add(cglp);
 
 			// CWDH
-			Cwdh cwdh = null;
+			this.cwdh = null;
 			if (!cwdh.Check())
 				throw new InvalidDataException("Invalid data for CWDH.");
 			this.Blocks.Add(cwdh);
@@ -320,9 +340,10 @@ namespace Nftr
 					throw new InvalidDataException("Invalid data for CMAP.");
 				this.Blocks.Add(cmap);
 			}
+			this.cmaps = this.Blocks.GetByType<Cmap>().ToArray();
 
 			// FINF
-			Finf finf = null;
+			this.finf = null;
 			if (!finf.Check())
 				throw new InvalidDataException("Invalid data for FINF.");
 			this.Blocks.Insert(0, finf);
@@ -362,58 +383,23 @@ namespace Nftr
 
 		private ushort SearchCharByImage(int index)
 		{
-			foreach (Cmap mapBlock in this.Blocks.GetByType<Cmap>()) 
-			{
-				int charCode = mapBlock.GetCharCode(index);
-				if (charCode != -1)
-					return (ushort)charCode;
-			}
-
-			return 0;
+			int fool;
+			return this.SearchCharByImage(index, out fool);
 		}
 
-        private struct Glyph
-        {
-            public int Id {
-				get;
-				set;
-			}
-
-            public Colour[,] Image {
-				get;
-				set;
-			}
-
-            public GWidth Width {
-				get;
-				set;
-			}
-
-			public ushort CharCode {
-				get;
-				set;
-			}
-
-			public Bitmap ToImage(int zoom)
+		private ushort SearchCharByImage(int index, out int mapId)
+		{
+			foreach (Cmap mapBlock in this.cmaps) 
 			{
-				Bitmap bmp = new Bitmap(this.Image.GetLength(0) * zoom + 1,
-				                        this.Image.GetLength(1) * zoom + 1);
-
-				for (int w = 0; w < this.Image.GetLength(0); w++) {
-					for (int h = 0; h < this.Image.GetLength(1); h++) {
-						for (int hzoom = 0; hzoom < zoom; hzoom++) {
-							for (int wzoom = 0; wzoom < zoom; wzoom++) {
-								bmp.SetPixel(
-									w * zoom + wzoom,
-									h * zoom + hzoom,
-									this.Image[w, h].ToColor());
-							}
-						}
-					}
+				int charCode = mapBlock.GetCharCode(index);
+				if (charCode != -1) {
+					mapId = mapBlock.Id;
+					return (ushort)charCode;
 				}
-
-				return bmp;
 			}
-        }
+
+			mapId = -1;
+			return 0;
+		}
     }
 }

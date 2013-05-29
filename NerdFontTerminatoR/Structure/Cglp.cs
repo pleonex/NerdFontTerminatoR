@@ -18,6 +18,10 @@ namespace Nftr.Structure
 	{
 		private List<Colour[,]> glyphs;
 
+		public Cglp(NitroFile file) : base(file)
+		{
+		}
+
 		public Cglp(NitroFile file, Colour[][,] glyphs, byte boxWidth, byte boxHeight,
 		            byte glyphWidth, byte glyphHeight, RotationMode depth, byte rotation)
 			: base(file)

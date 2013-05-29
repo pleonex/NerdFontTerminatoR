@@ -109,7 +109,7 @@ namespace Nftr.Structure
 			this.Unknown = br.ReadByte();
 			this.LineGap = br.ReadByte();
 			this.ErrorCharIndex = br.ReadUInt16();
-			this.DefaultWidth = Cwdh.GlyphWidth.FromStream(strIn);
+			this.DefaultWidth = Cwdh.GlyphWidth.FromStream(strIn, -1);
 			this.Encoding = (EncodingMode)br.ReadByte();
 			this.OffsetCglp = br.ReadUInt32();
 			this.OffsetGwdh = br.ReadUInt32();

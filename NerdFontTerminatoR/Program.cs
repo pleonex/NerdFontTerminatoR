@@ -19,8 +19,8 @@ namespace Nftr
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
 #else
-			//TestSingle();
-			TestFull();
+			TestSingle();
+			//TestFull();
 #endif
         }
 
@@ -35,10 +35,10 @@ namespace Nftr
 
 			NftrFont font = new NftrFont(fontPath);
 			font.Export(outPath + ".xml", outPath + ".png");
-			font.Write(outPath + ".new");
+			//font.Write(outPath + ".new");
 
-			Console.WriteLine("{0} written.", 
-			                  CompareFiles(fontPath, outPath + ".new") ? "Successfully" : "Unsuccessfully");
+			//Console.WriteLine("{0} written.", 
+			//                  CompareFiles(fontPath, outPath + ".new") ? "Successfully" : "Unsuccessfully");
 		}
 
 		private static void TestFull()
