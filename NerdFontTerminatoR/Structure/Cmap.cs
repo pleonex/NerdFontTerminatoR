@@ -10,6 +10,10 @@ namespace Nftr.Structure
 	{
 		private static int IdMap = 0;
 
+		private ushort firstChar;
+		private ushort lastChar;
+		private uint   type;
+
 		public Cmap(NitroFile file) : base(file)
 		{
 			this.Id = IdMap++;
@@ -26,18 +30,33 @@ namespace Nftr.Structure
 		}
 
 		public ushort FirstChar {
-			get;
-			set;
+			get { return this.firstChar; }
+			set { 
+				this.firstChar = value;
+				if (this.Type == 1) {
+					this.Size = 8 + 0xC + 2 * (this.lastChar - this.firstChar + 1);
+				}
+			}
 		}
 
 		public ushort LastChar {
-			get;
-			set;
+			get { return this.lastChar; }
+			set {
+				this.lastChar = value;
+				if (this.Type == 1) {
+					this.Size = 8 + 0xC + 2 * (this.lastChar - this.firstChar + 1);
+				}
+			}
 		}
 
 		public uint Type {
-			get;
-			set;
+			get { return this.type; }
+			set { 
+				this.type = value;
+				if (this.Type == 1) {
+					this.Size = 8 + 0xC + 2 * (this.lastChar - this.firstChar + 1);
+				}
+			}
 		}
 
 		public uint NextCmap {
@@ -132,8 +151,13 @@ namespace Nftr.Structure
 				break;
 
 			case 1:
-				for (int i = 0; i < this.Map.GetLength(0); i++) {
-					bw.Write((ushort)this.Map[i, 1]);
+				int idx = 0;
+				for (int code = this.FirstChar; code <= this.LastChar; code++) {
+					if (code == this.Map[idx, 0]) {
+						bw.Write((ushort)this.Map[idx++, 1]);
+					} else {
+						bw.Write((ushort)0xFFFF);
+					}
 				}
 				break;
 
@@ -213,8 +237,6 @@ namespace Nftr.Structure
 
 			// Update size
 			if (this.Type == 0 && this.Map.GetLength(0) == 0)
-				this.Size += 2;
-			else if (this.Type == 1)
 				this.Size += 2;
 			else if (this.Type == 2) {
 				if (this.Map.GetLength(0) == 0)

@@ -343,9 +343,9 @@ namespace Nftr
 
 				this.cmaps[id] = new Cmap(this);
 				this.cmaps[id].Id = id;
+				this.cmaps[id].Type      = Convert.ToUInt32(xmap.Element("Type").Value);
 				this.cmaps[id].FirstChar = Convert.ToUInt16(xmap.Element("FirstChar").Value, 16);
 				this.cmaps[id].LastChar  = Convert.ToUInt16(xmap.Element("LastChar").Value,  16);
-				this.cmaps[id].Type      = Convert.ToUInt32(xmap.Element("Type").Value);
 			}
 
 			// Gets Glyphs

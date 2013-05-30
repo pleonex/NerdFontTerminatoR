@@ -19,16 +19,29 @@ namespace Nftr
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
 #else
-			TestSingle();
+			//TestSingle();
 			//TestFull();
+			TestWork();
 #endif
         }
 
+		private static void TestWork()
+		{
+			string fin   = "/home/benito/Dropbox/Ninokuni español/Fuentes/";
+			string fout  = "/home/benito/Dropbox/Ninokuni español/Fuentes/";
+			string fname = "font_b9";
+
+			NftrFont fold = new NftrFont(fin + fname + ".NFTR");
+			fold.Export(fout + fname + "_.xml", fout + fname + "_.png");
+
+			//NftrFont fnew = new NftrFont(fout + fname + ".xml", fout + fname + ".png");
+			//fnew.Write(fout + fname + ".new");
+		}
 		private static void TestSingle()
 		{
 			string fontPath = "/var/run/media/benito/2038A2E238A2B5E6";
 			fontPath += "/nds/projects/NDS/NerdFontTerminatoR/files/";
-			fontPath += "Animal World - Big Cats/3_textfont.nftr";
+			fontPath += "Ninokuni [CLEAN]/4096_font_b9.NFTR";
 
 			string outPath = "/home/benito/";
 			outPath += "test";
@@ -42,7 +55,6 @@ namespace Nftr
 			Console.WriteLine("{0} written.", 
 			                  CompareFiles(fontPath, outPath + ".new") ? "Successfully" : "Unsuccessfully");
 		}
-
 		private static void TestFull()
 		{
 			string fontPath = "/var/run/media/benito/2038A2E238A2B5E6";
