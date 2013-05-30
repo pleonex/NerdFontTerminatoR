@@ -14,6 +14,14 @@ namespace Nftr.Structure
 			WidthRegion.ResetCount();
 		}
 
+		public Cwdh(NitroFile file, WidthRegion firstReg)
+			: base(file)
+		{
+			WidthRegion.ResetCount();
+			this.firstRegion = firstReg;
+			this.Size = 0x08 + this.firstRegion.GetTotalSize();
+		}
+
 		#region implemented abstract members of NitroBlock
 
 		protected override void ReadData(Stream strIn)
@@ -43,9 +51,9 @@ namespace Nftr.Structure
 			get { return this.firstRegion; }
 		}
 
-		public GlyphWidth GetWidth(ushort charCode)
+		public GlyphWidth GetWidth(ushort charCode, int idx)
 		{
-			return this.firstRegion.GetWidth(charCode);
+			return this.firstRegion.GetWidth(charCode, idx);
 		}
 
 		public struct GlyphWidth
@@ -128,6 +136,7 @@ namespace Nftr.Structure
 			{
 				this.Id = IdWidth++;
 				this.defaultWidth = defaultWidth;
+				this.Widths = new GlyphWidth[0];
 			}
 
 			public int Id {
@@ -153,6 +162,12 @@ namespace Nftr.Structure
 			public GlyphWidth[] Widths {
 				get;
 				set;
+			}
+
+			public int Size {
+				get {
+					return 0x8 + 3 * this.Widths.Length;
+				}
 			}
 
 			public static void ResetCount()
@@ -191,6 +206,20 @@ namespace Nftr.Structure
 				return wr;
 			}
 
+			public int GetTotalSize()
+			{
+				if (this.NextRegion != null)
+					return this.Size + this.NextRegion.GetTotalSize();
+				else
+					return this.Size;
+			}
+
+			public bool Contains(ushort charCode)
+			{
+				return true;
+				//return (charCode >= this.FirstChar) && (charCode <= this.LastChar);
+			}
+
 			public void Write(Stream strOut)
 			{
 				BinaryWriter bw = new BinaryWriter(strOut);
@@ -210,16 +239,38 @@ namespace Nftr.Structure
 				bw.Flush();
 			}
 
-			public GlyphWidth GetWidth(ushort charCode)
+			public GlyphWidth GetWidth(ushort charCode, int idx)
 			{
-				if (charCode >= this.FirstChar && charCode < this.LastChar) {
-					return this.Widths[charCode - this.FirstChar];
+				if (this.Contains(charCode)) {
+					//return this.Widths[charCode - this.FirstChar];
+					return this.Widths[idx];
 				} else {
 					if (this.NextRegion != null)
-						return this.NextRegion.GetWidth(charCode);
+						return this.NextRegion.GetWidth(charCode, idx);
 					else
 						return this.defaultWidth;
 				}
+			}
+
+			public void InsertWidth(ushort charCode, GlyphWidth width, int index)
+			{
+				if (!this.Contains(charCode)) {
+					if (this.NextRegion != null) {
+						this.NextRegion.InsertWidth(charCode, width, index);
+						return;
+					} else {
+						throw new ArgumentException("Invalid char code");
+					}
+				}
+
+				//int index = charCode - this.FirstChar;
+				if (this.Widths.Length <= index) {
+					GlyphWidth[] widths = this.Widths;
+					Array.Resize(ref widths, index + 1);
+					this.Widths = widths;
+				}
+
+				this.Widths[index] = width;
 			}
 		}
 	}

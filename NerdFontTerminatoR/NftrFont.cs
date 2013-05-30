@@ -113,12 +113,14 @@ namespace Nftr
 				Glyph g = new Glyph();
 				g.Id       = i;
 				g.Image    = this.cglp.GetGlyph(i);
-				g.Width    = this.cwdh.GetWidth(charCode);
+				g.Width    = this.cwdh.GetWidth(charCode, g.Id);
 				g.CharCode = charCode;
 				g.IdMap    = idMap;
 			
 				this.glyphs.Add(g);
 			}
+
+			this.PrintInfo();
 		}
 
 		public void PrintInfo()
@@ -292,59 +294,139 @@ namespace Nftr
 
 		private void Import(string xmlInfo, string glyphs)
 		{
+			Bitmap image = (Bitmap)Image.FromFile(glyphs);
 			XDocument doc = XDocument.Load(xmlInfo);
 			XElement root = doc.Element("NFTR");
 
-			this.VersionS = root.Element("Version").Value;
+			this.MagicStamp = "NFTR";
+			this.VersionS   = root.Element("Version").Value;
 
-			this.lineGap      = byte.Parse(root.Element("LineGap").Value);
 			this.errorChar    = ushort.Parse(root.Element("ErrorChar").Value);
-			this.defaultWidth = GWidth.FromXml(root.Element("DefaultWidth"));
+			this.lineGap      = byte.Parse(root.Element("LineGap").Value);
 			this.boxWidth     = byte.Parse(root.Element("BoxWidth").Value);
 			this.boxHeight    = byte.Parse(root.Element("BoxHeight").Value);
 			this.glyphWidth   = byte.Parse(root.Element("GlyphWidth").Value);
 			this.glyphHeight  = byte.Parse(root.Element("GlyphHeight").Value);
-			this.rotation     = (RotationMode)Enum.Parse(typeof(RotationMode), root.Element("Rotation").Value);
 			this.depth        = byte.Parse(root.Element("Depth").Value);
+			this.defaultWidth = GWidth.FromXml(root.Element("DefaultWidth"));
+			this.rotation     = (RotationMode)Enum.Parse(typeof(RotationMode), root.Element("Rotation").Value);
+			this.encoding     = (EncodingMode)Enum.Parse(typeof(EncodingMode), root.Element("Encoding").Value);
 
-			// TODO: Get Glyphs
+			// Gets Width regions
+			XElement xwidths = root.Element("Widths");
+			Cwdh.WidthRegion[] widthRegs = new Cwdh.WidthRegion[xwidths.Elements("Region").Count()];
 
+				// ... gets the data from the xml
+			foreach (XElement xreg in xwidths.Elements("Region")) {
+				int id = int.Parse(xreg.Element("Id").Value);
 
-			this.CreateStructure(doc);
-			throw new NotImplementedException();
+				widthRegs[id] = new Cwdh.WidthRegion(this.defaultWidth);
+				widthRegs[id].Id = id;
+				widthRegs[id].FirstChar = Convert.ToUInt16(xreg.Element("FirstChar").Value, 16);
+				widthRegs[id].LastChar  = Convert.ToUInt16(xreg.Element("LastChar").Value,  16);
+			}
+
+				// ... assign the next region
+			for (int i = 0; i < widthRegs.Length; i++) {
+				if (i + 1 == widthRegs.Length)
+					widthRegs[i].NextRegion = null;
+				else
+					widthRegs[i].NextRegion = widthRegs[i + 1];
+			}
+
+			// Gets Cmap regions
+			XElement xcmaps = root.Element("Maps");
+			this.cmaps = new Cmap[xcmaps.Elements("Map").Count()];
+
+			foreach (XElement xmap in xcmaps.Elements("Map")) {
+				int id = int.Parse(xmap.Element("Id").Value);
+
+				this.cmaps[id] = new Cmap(this);
+				this.cmaps[id].Id = id;
+				this.cmaps[id].FirstChar = Convert.ToUInt16(xmap.Element("FirstChar").Value, 16);
+				this.cmaps[id].LastChar  = Convert.ToUInt16(xmap.Element("LastChar").Value,  16);
+				this.cmaps[id].Type      = Convert.ToUInt32(xmap.Element("Type").Value);
+			}
+
+			// Gets Glyphs
+			XElement xglyphs = root.Element("Glyphs");
+			this.glyphs = new List<Glyph>(xglyphs.Elements("Glyph").Count());
+			for (int i = 0; i < xglyphs.Elements("Glyph").Count(); i++)
+				this.glyphs.Add(new Glyph());
+
+			// Reversing the glyphs, there are more probability to have high char codes first
+			// ... so there will be less array resizing in InsertWidth and InsertChar
+			foreach (XElement xglyph in xglyphs.Elements("Glyph").Reverse()) {
+				int id = int.Parse(xglyph.Element("Id").Value);
+
+				Glyph g = new Glyph();
+				g.Id       = id;
+				g.Width    = GWidth.FromXml(xglyph.Element("Width"));
+				g.Image    = this.CharFromMap(image, id);
+				g.IdMap    = int.Parse(xglyph.Element("IdMap").Value);
+				g.CharCode = Convert.ToUInt16(xglyph.Element("Code").Value, 16);
+
+				this.glyphs[id] = g;
+				if (g.Width.IdRegion >= 0)
+					widthRegs[g.Width.IdRegion].InsertWidth(g.CharCode, g.Width, g.Id);
+				this.cmaps[g.IdMap].InsertCharCode(g.Id, g.CharCode);
+			}
+
+			this.CreateStructure(widthRegs[0]);
 		}
 
+		/// <summary>
+		/// Gets a glyph from an image using default settings.
+		/// </summary>
+		/// <returns>The glyph</returns>
+		/// <param name="img">Image with all glyphs drawn</param>
+		/// <param name="glyphIdx">Glyph index.</param>
 		private Colour[,] CharFromMap(Bitmap img, int glyphIdx)
 		{
-			int numChars = this.glyphs.Count;
+			int numChars = this.glyphs.Capacity;
 
-			// Get the image size
+			// Get the number of columns and rows
 			int numColumns = (numChars < CharsPerLine) ? numChars : CharsPerLine;
 			int numRows = (int)Math.Ceiling((double)numChars / numColumns);
 
-			int charWidth = this.boxWidth + BorderThickness;
-			int charHeight = this.boxHeight + BorderThickness;
-
-			return this.CharFromMap(img, glyphIdx, charWidth, charHeight, numRows, numColumns, 1);
+			return this.CharFromMap(
+				img, glyphIdx,
+			    this.boxWidth, this.boxHeight, numRows, numColumns,
+				1, BorderThickness);
 		}
 
-		private Colour[,] CharFromMap(Bitmap img, int glyphIdx, int charWidth, int charHeight,
-		                              int numRows, int numColumns, int zoom)
+		/// <summary>
+		/// Gets a glyph from an image.
+		/// </summary>
+		/// <returns>The glyph</returns>
+		/// <param name="img">Image with all glyphs drawn</param>
+		/// <param name="glyphIdx">Glyph index.</param>
+		/// <param name="charWidth">Char width.</param>
+		/// <param name="charHeight">Char height.</param>
+		/// <param name="numRows">Number of rows.</param>
+		/// <param name="numColumns">Number of columns.</param>
+		/// <param name="zoom">Zoom.</param>
+		/// <param name="borderThickness">Border thickness.</param>
+		private Colour[,] CharFromMap(Bitmap img, int glyphIdx, int charWidth, int charHeight, int numRows, int numColumns,
+		                              int zoom, int borderThickness)
 		{
 			if (zoom != 1)
 				throw new NotImplementedException();
 
-			int width = numColumns * charWidth + BorderThickness;
-			int height = numRows * charHeight + BorderThickness;
+			int width  = numColumns * charWidth  + (numColumns + 1) * borderThickness;
+			int height = numRows    * charHeight + (numRows + 1)    * borderThickness;
 			
-			if (width != img.Width || height != img.Height)
-			{
-				throw new FormatException("Incorrect size.");
+			if (width != img.Width || height != img.Height) {
+				throw new ArgumentException("Incorrect image size.");
 			}
 
-			Colour[,] glyph = new Colour[this.boxWidth, this.boxHeight];
-			int startX = (glyphIdx % numRows) * charWidth + BorderThickness;
-			int startY = (glyphIdx / numRows) * charHeight + BorderThickness;
+			Colour[,] glyph = new Colour[charWidth, charHeight];
+
+			int column = glyphIdx % numColumns;
+			int row    = glyphIdx / numColumns;
+
+			int startX = column * charWidth  + (column + 1) * borderThickness;
+			int startY = row    * charHeight + (row + 1)    * borderThickness;
 			for (int x = startX, gx = 0; x < startX + charWidth; x += zoom, gx++) {
 				for (int y = startY, gy = 0; y < startY + charHeight; y += zoom, gy++) {
 					glyph[gx, gy] = Colour.FromColor(img.GetPixel(x, y));
@@ -353,41 +435,47 @@ namespace Nftr
 			return glyph;
 		}
 
-		private void CreateStructure(XDocument xml)
+		private void CreateStructure(Cwdh.WidthRegion firstReg)
 		{
 			// CGLP
+			// ... gets the glyphs in a array
 			Colour[][,] glyphs = new Colour[this.glyphs.Count][,];
 			for (int i = 0; i < this.glyphs.Count; i++)
 				glyphs[i] = this.glyphs[i].Image;
 
 			this.cglp = new Cglp(this, glyphs, this.boxWidth, this.boxHeight,
-			                     this.glyphWidth, this.glyphHeight, this.rotation, this.depth);
-			if (!cglp.Check())
-				throw new InvalidDataException("Invalid data for CGLP.");
+			                     this.glyphWidth, this.glyphHeight, this.depth, this.rotation);
+			//if (!cglp.Check())
+			//	throw new InvalidDataException("Invalid data for CGLP.");
 			this.Blocks.Add(cglp);
 
 			// CWDH
-			this.cwdh = null;
-			if (!cwdh.Check())
-				throw new InvalidDataException("Invalid data for CWDH.");
+			this.cwdh = new Cwdh(this, firstReg);
+			//if (!cwdh.Check())
+			//	throw new InvalidDataException("Invalid data for CWDH.");
 			this.Blocks.Add(cwdh);
 
 			// CMAP
-			foreach (XElement node in xml.Element("NFTR").Elements("Cmap")) {
-				Cmap cmap = new Cmap(this, node);
-				if (!cmap.Check())
-					throw new InvalidDataException("Invalid data for CMAP.");
-				this.Blocks.Add(cmap);
-			}
-			this.cmaps = this.Blocks.GetByType<Cmap>().ToArray();
+			//for (int i = 0; i < this.cmaps.Length; i++)
+			//	if (!this.cmaps[i].Check())
+			//		throw new InvalidDataException("Invalid data for CMAP (" + i.ToString() + ")");
+			this.Blocks.AddRange(this.cmaps);
 
 			// FINF
-			this.finf = null;
-			if (!finf.Check())
-				throw new InvalidDataException("Invalid data for FINF.");
+			this.finf = new Finf(this);
+			this.finf.Unknown        = 0;
+			this.finf.LineGap        = this.lineGap;
+			this.finf.ErrorCharIndex = this.errorChar;
+			this.finf.DefaultWidth   = this.defaultWidth;
+			this.finf.Encoding       = this.encoding;
+			this.finf.GlyphWidth     = this.glyphWidth;
+			this.finf.GlyphHeight    = this.glyphHeight;
+			this.finf.BearingX       = this.defaultWidth.BearingX;
+			this.finf.BearingY       = this.lineGap;
+			this.finf.UpdateOffsets();
+			//if (!finf.Check())
+			//	throw new InvalidDataException("Invalid data for FINF.");
 			this.Blocks.Insert(0, finf);
-
-			throw new NotImplementedException();
 		}
 
 		/// <summary>

@@ -13,20 +13,16 @@ namespace Nftr.Structure
 		public Cmap(NitroFile file) : base(file)
 		{
 			this.Id = IdMap++;
-		}
 
-		public Cmap(NitroFile file, XElement node)
-			: base(file)
-		{
-			this.Id = IdMap++;
-			this.Import(node);
+			this.Map = new int[0, 2];
+			this.Size = 8 + 0xC;
 		}
 
 		#region Properties
 
 		public int Id {
 			get;
-			private set;
+			set;
 		}
 
 		public ushort FirstChar {
@@ -150,15 +146,16 @@ namespace Nftr.Structure
 				break;
 			}
 
-			// Ok... Let's write it... but it won't work always and
-			//  games don't need it
-			if (this.NextCmap > 0) {
-				uint startNextPos = (uint)strOut.Position + 8; // Skip nitroblock header
-				if (startNextPos % 4 != 0)
-					startNextPos += 4 - (startNextPos % 4);
+			// Ok... Let's write it... but it won't work always and games don't read it
+			// If it is not the last one write it
+			int blockIdx = this.File.Blocks.FindIndex(b => b == this);
+			if (blockIdx + 1 != this.File.Blocks.Count) {
+				this.NextCmap = (uint)strOut.Position + 8; // Skip nitroblock header
+				if (this.NextCmap % 4 != 0)
+					this.NextCmap += 4 - (this.NextCmap % 4);
 
 				strOut.Position = startPos + 8;
-				bw.Write(startNextPos);
+				bw.Write(this.NextCmap);
 			}
 
 			bw.Flush();
@@ -174,98 +171,6 @@ namespace Nftr.Structure
 		}
 
 		#endregion
-
-		private void Import(XElement node)
-		{
-			this.FirstChar = Convert.ToUInt16(node.Element("FirstChar").Value);
-			this.LastChar  = Convert.ToUInt16(node.Element("LastChar").Value);
-			this.Type      = Convert.ToUInt32(node.Element("Type").Value);
-
-			int numEntries = this.LastChar - this.FirstChar + 1;
-			this.Map = new int[numEntries, 2];
-			XElement xmap = node.Element("Map");
-
-			switch (this.Type) {
-			case 0:
-				int firstGlyph = Convert.ToInt32(xmap.Element("FirstImage").Value);
-				for (int i = 0; i < numEntries; i++) {
-					this.Map[i, 0] = this.FirstChar + i;
-					this.Map[i, 1] = firstGlyph + i;
-				}
-				break;
-
-			case 1:
-				int idx = 0;
-				foreach (XElement el in xmap.Elements("Image")) {
-					this.Map[idx, 0] = this.FirstChar + idx;
-					this.Map[idx, 1] = Convert.ToInt32(el.Value);
-					idx++;
-				}
-				break;
-
-			case 2:
-				List<XElement> entries = new List<XElement>(xmap.Elements("Entry"));
-				this.Map = new int[entries.Count, 2];
-				for (int i = 0; i < entries.Count; i++) {
-					this.Map[i, 0] = Convert.ToInt32(entries[i].Element("Char").Value);
-					this.Map[i, 1] = Convert.ToInt32(entries[i].Element("Image").Value);
-				}
-				break;
-
-			default:
-				throw new FormatException("Invalid type for Cmap");
-			}
-		}
-
-		public XElement Export()
-		{
-			Finf finf = this.File.Blocks.GetByType<Finf>(0);
-			XElement xcmap = new XElement("Cmap");
-
-			xcmap.Add(new XElement("FirstChar", this.FirstChar.ToString("X")));
-			xcmap.Add(new XComment(" (" + finf.GetChar(this.FirstChar) + ") "));
-			xcmap.Add(new XElement("LastChar", this.LastChar.ToString("X")));
-			xcmap.Add(new XComment(" (" + finf.GetChar(this.LastChar) + ") "));
-			xcmap.Add(new XElement("Type", this.Type));
-	
-			XElement map = new XElement("Map");
-			xcmap.Add(map);
-			switch (this.Type) {
-				case 0:
-				map.Add(new XElement("FirstImage", this.Map[0, 1]));
-				StringBuilder mapComment = new StringBuilder();
-				for (int i = 0; i < this.Map.GetLength(0); i++) {
-					if (i != 0 && i % 5 == 0)
-						mapComment.AppendLine();
-					mapComment.AppendFormat(" {0}:{1:X} ({2})  ",
-					                        this.Map[i, 1], this.Map[i, 0], finf.GetChar(this.Map[i, 0]));
-				}
-				map.Add(new XComment(mapComment.ToString()));
-				break;
-
-				case 1:
-				for (int i = 0; i < this.Map.GetLength(0); i++) {
-					XElement ximg = new XElement("Image", this.Map[i, 1]);
-					map.Add(new XComment(string.Format(
-						" {0:X} ({1}) ",
-						this.Map[i, 0],
-						finf.GetChar(this.Map[i, 0]))));
-					map.Add(ximg);
-				}
-				break;
-
-				case 2:
-				for (int i = 0; i < this.Map.GetLength(0); i++) {
-					XElement xchar = new XElement("Entry");
-					xchar.Add(new XElement("Image", this.Map[i, 1]));
-					xchar.Add(new XElement("Char", this.Map[i, 0].ToString("X")));
-					xchar.Add(new XComment(" (" + finf.GetChar(this.Map[i, 0]) + ") "));
-				}
-				break;
-			}
-
-			return xcmap;
-		}
 
 		public bool Contains(int imgIndex)
 		{
@@ -298,6 +203,43 @@ namespace Nftr.Structure
 			}
 
 			return -1;
+		}
+
+		public void InsertCharCode(int imgIndex, ushort charCode)
+		{
+			if (charCode < this.FirstChar || charCode > this.LastChar) {
+				throw new ArgumentException("Invalid char code");
+			}
+
+			// Update size
+			if (this.Type == 0 && this.Map.GetLength(0) == 0)
+				this.Size += 2;
+			else if (this.Type == 1)
+				this.Size += 2;
+			else if (this.Type == 2) {
+				if (this.Map.GetLength(0) == 0)
+					this.Size += 2;
+				this.Size += 4;
+			}
+			
+
+			// Resize and do a binary search copy
+			int[,] map = new int[this.Map.GetLength(0) + 1, 2];
+			for (int i = 0, j = 0; i < map.GetLength(0); i++) {
+				if (j < this.Map.GetLength(0) && charCode > this.Map[j, 0]) {
+					map[i, 0] = this.Map[j, 0];
+					map[i, 1] = this.Map[j, 1];
+					j++;
+				} else if (charCode != 0xFFFF) {
+					map[i, 0] = charCode;
+					map[i, 1] = imgIndex;
+					charCode = 0xFFFF; // It won't be copied again
+				} else {
+					throw new Exception("Unknown error");
+				}
+			}
+
+			this.Map = map;
 		}
 	}
 }

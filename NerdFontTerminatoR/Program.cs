@@ -35,10 +35,12 @@ namespace Nftr
 
 			NftrFont font = new NftrFont(fontPath);
 			font.Export(outPath + ".xml", outPath + ".png");
-			//font.Write(outPath + ".new");
 
-			//Console.WriteLine("{0} written.", 
-			//                  CompareFiles(fontPath, outPath + ".new") ? "Successfully" : "Unsuccessfully");
+			font = new NftrFont(outPath + ".xml", outPath + ".png");
+			font.Write(outPath + ".new");
+
+			Console.WriteLine("{0} written.", 
+			                  CompareFiles(fontPath, outPath + ".new") ? "Successfully" : "Unsuccessfully");
 		}
 
 		private static void TestFull()

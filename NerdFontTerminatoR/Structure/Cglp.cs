@@ -23,7 +23,7 @@ namespace Nftr.Structure
 		}
 
 		public Cglp(NitroFile file, Colour[][,] glyphs, byte boxWidth, byte boxHeight,
-		            byte glyphWidth, byte glyphHeight, RotationMode depth, byte rotation)
+		            byte glyphWidth, byte glyphHeight, byte depth, RotationMode rotation)
 			: base(file)
 		{
 			this.BoxWidth = boxWidth;
@@ -31,8 +31,11 @@ namespace Nftr.Structure
 			this.GlyphWidth = glyphWidth;
 			this.GlyphHeight = glyphHeight;
 			this.Depth = (byte)depth;
-			this.Rotation = rotation;
+			this.Rotation = (byte)rotation;
 			this.glyphs = new List<Colour[,]>(glyphs);
+
+			int boxSize = this.BoxWidth * this.BoxHeight * this.Depth;
+			this.Size = 0x08 + 0x08 + (int)Math.Ceiling(boxSize / 8.0) * this.glyphs.Count;
 		}
 
 		#region Properties

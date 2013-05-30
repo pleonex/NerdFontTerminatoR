@@ -26,6 +26,7 @@ namespace Nftr
 			}
 
 			this.blockTypes = blockTypes;
+			this.blocks = new BlockCollection();
 		}
 
 		protected NitroFile(string fileIn, params Type[] blockTypes)
@@ -37,6 +38,10 @@ namespace Nftr
 
 			fs.Dispose();
 			fs.Close();
+		}
+
+		public static ushort BlocksStart {
+			get { return 0x10; }
 		}
 
 		protected virtual void Read(Stream strIn, int size)
@@ -98,8 +103,6 @@ namespace Nftr
 
 		public virtual void Write(Stream strOut)
 		{
-			const ushort blocksStart = 0x10;
-
 			if (this.Blocks.Count > ushort.MaxValue)
 				throw new Exception("Too many blocks.");
 
@@ -111,11 +114,11 @@ namespace Nftr
 			bw.Write(BomLittleEndiannes);
 			bw.Write(this.Version);
 			bw.Write(0x00);					// File size, unknown at the moment
-			bw.Write(blocksStart);
+			bw.Write(BlocksStart);
 			bw.Write((ushort)this.Blocks.Count);
 			bw.Flush();
 
-			while (strOut.Position < startPos + blocksStart)
+			while (strOut.Position < startPos + BlocksStart)
 				strOut.WriteByte(0x00);
 
 			// Starts writing blocks
@@ -140,6 +143,7 @@ namespace Nftr
 
 		public string MagicStamp {
 			get { return this.magicStamp; }
+			set { this.magicStamp = value; }
 		}
 
 		public ushort Version {
@@ -149,7 +153,7 @@ namespace Nftr
 
 		public string VersionS {
 			get { return (this.version >> 8).ToString() + "." + (this.version & 0xFF).ToString(); }
-			set { this.version = (ushort)((Convert.ToByte(value[0]) << 8) | (Convert.ToByte(value[2]))); }
+			set { this.version = (ushort)(((value[0] - '0') << 8) | (value[2] - '0')); }
 		}
 
 		public BlockCollection Blocks {
@@ -161,6 +165,11 @@ namespace Nftr
 
 	public class BlockCollection : List<NitroBlock>
 	{
+		public BlockCollection()
+			: base()
+		{
+		}
+
 		public BlockCollection(int capacity)
 			: base(capacity)
 		{

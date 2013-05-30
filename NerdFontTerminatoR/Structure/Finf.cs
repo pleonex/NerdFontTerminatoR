@@ -17,6 +17,10 @@ namespace Nftr.Structure
 		public Finf(NitroFile file)
 			: base(file)
 		{
+			if (file.VersionS != "1.2")
+				this.Size = 0x1C;
+			else
+				this.Size = 0x20;
 		}
 
 		#region Properties
@@ -68,7 +72,7 @@ namespace Nftr.Structure
 			set;
 		}
 
-		public uint OffsetGwdh {
+		public uint OffsetCwdh {
 			get;
 			set;
 		}
@@ -112,7 +116,7 @@ namespace Nftr.Structure
 			this.DefaultWidth = Cwdh.GlyphWidth.FromStream(strIn, -1);
 			this.Encoding = (EncodingMode)br.ReadByte();
 			this.OffsetCglp = br.ReadUInt32();
-			this.OffsetGwdh = br.ReadUInt32();
+			this.OffsetCwdh = br.ReadUInt32();
 			this.OffsetCmap = br.ReadUInt32();
 
 			if (this.File.Version == 0x0102) {
@@ -135,7 +139,7 @@ namespace Nftr.Structure
 			this.DefaultWidth.Write(strOut);
 			bw.Write((byte)this.Encoding);
 			bw.Write(this.OffsetCglp);
-			bw.Write(this.OffsetGwdh);
+			bw.Write(this.OffsetCwdh);
 			bw.Write(this.OffsetCmap);
 
 			if (this.File.VersionS == "1.2") {
@@ -175,6 +179,17 @@ namespace Nftr.Structure
 				return ch.ToString();
 			else
 				return "";
+		}
+
+		public void UpdateOffsets()
+		{
+			uint offsetFinf = NitroFile.BlocksStart;
+			this.OffsetCglp = (uint)(offsetFinf + this.Size) + 8;
+			this.OffsetCwdh = (uint)(this.OffsetCglp + this.File.Blocks.GetByType<Cglp>(0).Size);
+			this.OffsetCmap = (uint)(this.OffsetCwdh + this.File.Blocks.GetByType<Cwdh>(0).Size);
+
+			this.OffsetCwdh += 4 - (this.OffsetCwdh % 4);
+			this.OffsetCmap += 4 - (this.OffsetCmap % 4);
 		}
 	}
 }
