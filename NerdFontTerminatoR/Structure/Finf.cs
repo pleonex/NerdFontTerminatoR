@@ -210,8 +210,10 @@ namespace Nftr.Structure
 			this.OffsetCwdh = (uint)(this.OffsetCglp + this.File.Blocks.GetByType<Cglp>(0).Size);
 			this.OffsetCmap = (uint)(this.OffsetCwdh + this.File.Blocks.GetByType<Cwdh>(0).Size);
 
-			this.OffsetCwdh += 4 - (this.OffsetCwdh % 4);
-			this.OffsetCmap += 4 - (this.OffsetCmap % 4);
+			if (this.OffsetCwdh % 4 != 0)
+				this.OffsetCwdh += 4 - (this.OffsetCwdh % 4);
+			if (this.OffsetCmap % 4 != 0)
+				this.OffsetCmap += 4 - (this.OffsetCmap % 4);
 		}
 	}
 }

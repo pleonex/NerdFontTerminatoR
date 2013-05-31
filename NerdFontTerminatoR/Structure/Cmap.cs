@@ -175,7 +175,7 @@ namespace Nftr.Structure
 			case 1:
 				int idx = 0;
 				for (int code = this.FirstChar; code <= this.LastChar; code++) {
-					if (code == this.Map[idx, 0]) {
+					if (idx < this.Map.GetLength (0) && code == this.Map[idx, 0]) {
 						bw.Write((ushort)this.Map[idx++, 1]);
 					} else {
 						bw.Write((ushort)0xFFFF);

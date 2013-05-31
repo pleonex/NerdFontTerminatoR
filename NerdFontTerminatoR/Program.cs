@@ -1,4 +1,4 @@
-// -----------------------------------------------------------------------
+﻿// -----------------------------------------------------------------------
 // <copyright file="Program.cs" company="none">
 // Copyright (C) 2013
 //
@@ -49,15 +49,15 @@ namespace Nftr
 
 		private static void TestWork()
 		{
-			string fin   = "/home/benito/Dropbox/Ninokuni español/Fuentes/";
-			string fout  = "/home/benito/Dropbox/Ninokuni español/Fuentes/";
-			string fname = "font_b32";
+			string fin   = @"C:\Users\Benito\Documents\My Dropbox\Ninokuni español\Fuentes\"; //@"G:\nds\projects\ninokuni\";
+			string fout  = @"C:\Users\Benito\Documents\My Dropbox\Ninokuni español\Fuentes\"; //@"G:\nds\projects\ninokuni\";
+			string fname = "font_b16";
 
-			NftrFont fold = new NftrFont(fin + fname + ".NFTR");
-			fold.Export(fout + fname + "_.xml", fout + fname + "_.png");
+			//NftrFont fold = new NftrFont(fin + fname + ".NFTR");
+			//fold.Export(fout + fname + ".xml", fout + fname + ".png");
 
-			//NftrFont fnew = new NftrFont(fout + fname + ".xml", fout + fname + ".png");
-			//fnew.Write(fout + fname + ".new");
+			NftrFont fnew = new NftrFont(fout + fname + ".xml", fout + fname + "_VERSION1.png");
+			fnew.Write(fout + fname + "_new.NFTR");
 		}
 		private static void TestSingle()
 		{
