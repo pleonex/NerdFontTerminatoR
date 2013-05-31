@@ -34,8 +34,16 @@ namespace Nftr
         /// Punto de entrada principal para la aplicación.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
+			Console.WriteLine("NerdFontTerminatoR ... V 0.1");
+			Console.WriteLine("Create, view & edit NFTR fonts from NDS games.");
+			Console.WriteLine(" ~~ by pleonex ~~ ");
+			Console.WriteLine();
+
+			ConsoleMode(args);
+			return;
+
 #if !DEBUG
 			Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
@@ -43,9 +51,48 @@ namespace Nftr
 #else
 			//TestSingle();
 			//TestFull();
-			TestWork();
+			//TestWork();
 #endif
         }
+
+		private static void ConsoleMode(string[] args)
+		{
+			if (args.Length != 4 || (args[0] != "-i" && args[0] != "-e")) {
+				PrintHelp();
+				return;
+			}
+
+			NftrFont font;
+
+			// Import mode
+			if (args[0] == "-i" && args.Length == 4) {
+				Console.WriteLine("Importing from:\n\t{0}\n\t{1}\nto:\n\t{2}", args[1], args[2], args[3]);
+				font = new NftrFont(args[1], args[2]);
+				font.Write(args[3]);
+			}
+
+			// Export mode
+			if (args[0] == "-e" && args.Length == 4) {
+				Console.WriteLine("Exporting from:\n\t{0}\nto:\n\t{1}\n\t{2}", args[1], args[2], args[3]);
+				font = new NftrFont(args[1]);
+				font.Export(args[2], args[3]);
+			}
+
+			Console.WriteLine();
+			Console.WriteLine("Done!");
+		}
+
+		private static void PrintHelp()
+		{
+			Console.WriteLine("USE: NerdFontTerminatoR.exe mode file1 file2 file3");
+			Console.WriteLine();
+			Console.WriteLine("Modes:");
+			Console.WriteLine("\t-e\tExport font to XML + PNG");
+			Console.WriteLine("\t\tfile1: NFTR, file2: XML, file3: PNG");
+			Console.WriteLine();
+			Console.WriteLine("\t-i\tImport (create) font from XML + PNG");
+			Console.WriteLine("\t\tfile1: XML,  file2: PNG, file3: NFTR (new)");
+		}
 
 		private static void TestWork()
 		{
