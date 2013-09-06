@@ -88,6 +88,8 @@
     <Compile Include="NftrFont.cs" />
     <None Include="Specification.txt" />
     <Compile Include="Glyph.cs" />
+    <None Include="Scripts\AutotraceFont.py" />
+    <None Include="Scripts\VectorialFont.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="font.ico" />
@@ -102,5 +104,6 @@
   -->
   <ItemGroup>
     <Folder Include="Structure\" />
+    <Folder Include="Scripts\" />
   </ItemGroup>
 </Project>
