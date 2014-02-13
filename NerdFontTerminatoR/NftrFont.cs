@@ -109,6 +109,10 @@ namespace Nftr
 			for (int i = 0; i < this.cglp.NumGlyphs; i++) {
 				int idMap;
 				ushort charCode = this.SearchCharByImage(i, out idMap);
+				if (idMap == -1) {
+					this.cglp.GetGlyphImage(i).Save("Unvalid char " + i.ToString() + ".png");
+					continue;
+				}
 
 				Glyph g = new Glyph();
 				g.Id       = i;
@@ -525,6 +529,7 @@ namespace Nftr
 				}
 			}
 
+			Console.WriteLine("WARNING: Charcode not found. Index: {0}", index);
 			mapId = -1;
 			return 0;
 		}

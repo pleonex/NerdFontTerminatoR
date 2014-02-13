@@ -42,17 +42,6 @@ namespace Nftr
 			Console.WriteLine();
 
 			ConsoleMode(args);
-			return;
-
-#if !DEBUG
-			Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
-#else
-			//TestSingle();
-			//TestFull();
-			//TestWork();
-#endif
         }
 
 		private static void ConsoleMode(string[] args)
@@ -96,7 +85,7 @@ namespace Nftr
 
 		private static void TestWork()
 		{
-			string fin   = @"C:\Users\Benito\Documents\My Dropbox\Ninokuni español\Fuentes\"; //@"G:\nds\projects\ninokuni\";
+			//string fin   = @"C:\Users\Benito\Documents\My Dropbox\Ninokuni español\Fuentes\"; //@"G:\nds\projects\ninokuni\";
 			string fout  = @"C:\Users\Benito\Documents\My Dropbox\Ninokuni español\Fuentes\"; //@"G:\nds\projects\ninokuni\";
 			string fname = "font_b16";
 
