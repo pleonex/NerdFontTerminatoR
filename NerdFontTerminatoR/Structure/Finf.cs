@@ -207,11 +207,12 @@ namespace Nftr.Structure
 		{
 			uint offsetFinf = NitroFile.BlocksStart;
 			this.OffsetCglp = (uint)(offsetFinf + this.Size) + 8;
-			this.OffsetCwdh = (uint)(this.OffsetCglp + this.File.Blocks.GetByType<Cglp>(0).Size);
-			this.OffsetCmap = (uint)(this.OffsetCwdh + this.File.Blocks.GetByType<Cwdh>(0).Size);
 
+			this.OffsetCwdh = (uint)(this.OffsetCglp + this.File.Blocks.GetByType<Cglp>(0).Size);
 			if (this.OffsetCwdh % 4 != 0)
 				this.OffsetCwdh += 4 - (this.OffsetCwdh % 4);
+
+			this.OffsetCmap = (uint)(this.OffsetCwdh + this.File.Blocks.GetByType<Cwdh>(0).Size);
 			if (this.OffsetCmap % 4 != 0)
 				this.OffsetCmap += 4 - (this.OffsetCmap % 4);
 		}
