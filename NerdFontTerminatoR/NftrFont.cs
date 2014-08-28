@@ -106,7 +106,7 @@ namespace Nftr
 
 			// Get glyphs info
 			this.glyphs = new List<Glyph>();
-			for (int i = 0; i < this.cglp.NumGlyphs; i++) {
+			for (int i = 0, idx = 0; i < this.cglp.NumGlyphs; i++) {
 				int idMap;
 				ushort charCode = this.SearchCharByImage(i, out idMap);
 				if (idMap == -1) {
@@ -115,7 +115,7 @@ namespace Nftr
 				}
 
 				Glyph g = new Glyph();
-				g.Id       = i;
+				g.Id       = idx++;
 				g.Image    = this.cglp.GetGlyph(i);
 				g.Width    = this.cwdh.GetWidth(charCode, g.Id);
 				g.CharCode = charCode;
