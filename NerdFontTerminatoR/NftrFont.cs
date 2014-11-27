@@ -273,8 +273,12 @@ namespace Nftr
 					int x = c * (charWidth  + borderThickness);
 					int y = r * (charHeight + borderThickness);
 
-					// Alignment due to rectangle drawing method.
-					int borderAlign = (int)System.Math.Floor(borderThickness / 2.0) + (1 - (borderThickness % 2));
+					// Alignment due to rectangle drawing method. It changes if using mono
+					int borderAlign;
+					if (Type.GetType("Mono.Runtime") == null)
+						borderAlign = (int)System.Math.Floor(borderThickness / 2.0);
+					else
+						borderAlign = (int)System.Math.Floor(borderThickness / 2.0) + (1 - (borderThickness % 2));
 
 					if (borderThickness > 0) {
 						graphic.DrawRectangle(
