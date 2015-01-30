@@ -516,6 +516,11 @@ namespace Nftr
 			return result;
 		}
 
+		public Glyph SearchGlyphByChar(char ch)
+		{
+			return glyphs.FirstOrDefault(g => g.CharCode == ch);
+		}
+
 		private ushort SearchCharByImage(int index)
 		{
 			int fool;
