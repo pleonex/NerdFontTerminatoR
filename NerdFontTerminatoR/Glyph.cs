@@ -53,7 +53,7 @@ namespace Nftr
 			set;
 		}
 
-		public Bitmap ToImage(int zoom)
+		public Bitmap ToImage(int zoom = 1, bool transparent = false)
 		{
 			Bitmap bmp = new Bitmap(this.Image.GetLength(0) * zoom + 1,
 			                        this.Image.GetLength(1) * zoom + 1);
@@ -62,10 +62,11 @@ namespace Nftr
 				for (int h = 0; h < this.Image.GetLength(1); h++) {
 					for (int hzoom = 0; hzoom < zoom; hzoom++) {
 						for (int wzoom = 0; wzoom < zoom; wzoom++) {
-							bmp.SetPixel(
-								w * zoom + wzoom,
-								h * zoom + hzoom,
-								this.Image[w, h].ToColor());
+							var color = this.Image[w, h].ToColor();
+							if (transparent && color == Color.FromArgb(255, 255, 255))
+								color = Color.FromArgb(0, color);
+
+							bmp.SetPixel(w * zoom + wzoom,	h * zoom + hzoom, color);
 						}
 					}
 				}
