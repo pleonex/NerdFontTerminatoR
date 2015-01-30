@@ -20,7 +20,7 @@
 // <date>30/05/2013</date>
 // -----------------------------------------------------------------------
 
-namespace Nftr
+namespace Nftr.CLI
 {
     partial class Form1
     {

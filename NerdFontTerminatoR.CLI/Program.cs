@@ -26,7 +26,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace Nftr
+namespace Nftr.CLI
 {
     static class Program
     {

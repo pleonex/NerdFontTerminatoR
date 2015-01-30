@@ -1,13 +1,13 @@
 # Ignore IDE conf files
-NerdFontTerminatoR.userprefs
-NerdFontTerminatoR.usertasks
-NerdFontTerminatoR.suo
-NerdFontTerminatoR/NerdFontTerminatoR.csproj.user
+*.userprefs
+*.usertasks
+*.suo
+*.csproj.user
 
 # Ignore test files
 files/
 
 # Ignore build files
-NerdFontTerminatoR/bin/
-NerdFontTerminatoR/obj/
+**/bin/
+**/obj/
 
