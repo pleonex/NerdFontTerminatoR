@@ -518,7 +518,7 @@ namespace Nftr
 
 		public Glyph SearchGlyphByChar(char ch)
 		{
-			return glyphs.FirstOrDefault(g => g.CharCode == ch);
+			return glyphs.FirstOrDefault(g => this.finf.GetChar(g.CharCode) == ch.ToString());
 		}
 
 		private ushort SearchCharByImage(int index)
