@@ -79,6 +79,13 @@ namespace Nftr
             get { return 0x4E465452; }
         }
 
+		public Glyph ErrorChar {
+			get {
+				ushort charCode = this.SearchCharByImage(this.errorChar);
+				return this.glyphs.FirstOrDefault(g => g.CharCode == charCode);
+			}
+		}
+
 		protected override bool IsSupported(ushort version)
 		{
 			return Versions.Contains(version);
