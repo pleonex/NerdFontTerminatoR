@@ -20,6 +20,7 @@
 // <date>1/3/2016</date>
 // -----------------------------------------------------------------------
 using System;
+using System.Linq;
 using System.Drawing;
 using Nftr.Structure;
 
@@ -66,6 +67,12 @@ namespace Nftr
                 graphics.DrawImageUnscaled(glyph.ToImage(1, true), x, y);
                 x += glyph.Width.Advance - glyph.Width.BearingX;
             }
+        }
+
+        public int GetStringLength(string text)
+        {
+            return text.Split('\n').Max(line =>
+                line.Sum(ch => (font.SearchGlyphByChar(ch) ?? defaultChar).Width.Advance));
         }
     }
 }
