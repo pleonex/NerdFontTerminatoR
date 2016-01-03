@@ -533,15 +533,17 @@ namespace Nftr
 		public Glyph SearchGlyphByChar(char ch)
 		{
             var matches = glyphs
-                .Where(g => this.finf.GetChar(g.CharCode) == ch.ToString())
-                .ToList();
-            
-            if (matches.Count() > 1) {
+                .Where(g => this.finf.GetChar(g.CharCode) == ch.ToString());
+
+            #if DEBUG
+            // Ignore multiple matches of ? because this is an encoding problem.
+            if (ch != '?' && matches.Any()) {
                 Console.WriteLine(
                     "WARNING: Multiple matches for char '{0}' -> {1}",
                     ch,
                     string.Join(",", matches.Select(g => g.CharCode.ToString("X4"))));
             }
+            #endif
 
             return matches.FirstOrDefault();
 		}
