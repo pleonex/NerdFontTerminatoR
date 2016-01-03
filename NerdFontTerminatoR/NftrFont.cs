@@ -532,7 +532,18 @@ namespace Nftr
 
 		public Glyph SearchGlyphByChar(char ch)
 		{
-            return glyphs.FirstOrDefault(g => this.finf.GetChar(g.CharCode) == ch.ToString());
+            var matches = glyphs
+                .Where(g => this.finf.GetChar(g.CharCode) == ch.ToString())
+                .ToList();
+            
+            if (matches.Count() > 1) {
+                Console.WriteLine(
+                    "WARNING: Multiple matches for char '{0}' -> {1}",
+                    ch,
+                    string.Join(",", matches.Select(g => g.CharCode.ToString("X4"))));
+            }
+
+            return matches.FirstOrDefault();
 		}
 
 		private ushort SearchCharByImage(int index)
