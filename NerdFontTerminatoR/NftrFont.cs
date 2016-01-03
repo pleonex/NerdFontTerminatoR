@@ -136,7 +136,9 @@ namespace Nftr
 				this.glyphs.Add(g);
 			}
 
+            #if DEBUG
 			this.PrintInfo();
+            #endif
 		}
 
 		public void PrintInfo()
