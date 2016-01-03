@@ -27,7 +27,6 @@ namespace Nftr
 	using System.Drawing;
     using System.IO;
     using System.Linq;
-	using System.Text;
 	using System.Xml.Linq;
 	using Nftr.Structure;
 	using GWidth = Nftr.Structure.Cwdh.GlyphWidth;
@@ -65,6 +64,7 @@ namespace Nftr
 			: base(nftrPath, typeof(Finf), typeof(Cglp), typeof(Cwdh), typeof(Cmap))
         {
 			Cmap.ResetCount();
+            Painter = new Painter(this);
         }
 
         public NftrFont(string xmlInfo, string glyphs)
@@ -85,6 +85,11 @@ namespace Nftr
 				return this.glyphs.FirstOrDefault(g => g.CharCode == charCode);
 			}
 		}
+
+        public Painter Painter {
+            get;
+            private set;
+        }
 
 		protected override bool IsSupported(ushort version)
 		{
@@ -525,7 +530,7 @@ namespace Nftr
 
 		public Glyph SearchGlyphByChar(char ch)
 		{
-			return glyphs.FirstOrDefault(g => this.finf.GetChar(g.CharCode) == ch.ToString());
+			return glyphs.SingleOrDefault(g => this.finf.GetChar(g.CharCode) == ch.ToString());
 		}
 
 		private ushort SearchCharByImage(int index)

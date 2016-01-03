@@ -26,7 +26,7 @@ using GWidth = Nftr.Structure.Cwdh.GlyphWidth;
 
 namespace Nftr
 {
-	public struct Glyph
+	public class Glyph
 	{
 		public int Id {
 			get;
