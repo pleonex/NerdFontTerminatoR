@@ -46,15 +46,12 @@ namespace Nftr.CLI
 
 		private static void ConsoleMode(string[] args)
 		{
-			if (args.Length != 4 || (args[0] != "-i" && args[0] != "-e")) {
-				PrintHelp();
-				return;
-			}
-
+            bool processed = false;
 			NftrFont font;
 
 			// Import mode
 			if (args[0] == "-i" && args.Length == 4) {
+                processed = true;
 				Console.WriteLine("Importing from:\n\t{0}\n\t{1}\nto:\n\t{2}", args[1], args[2], args[3]);
 				font = new NftrFont(args[1], args[2]);
 				font.Write(args[3]);
@@ -62,10 +59,22 @@ namespace Nftr.CLI
 
 			// Export mode
 			if (args[0] == "-e" && args.Length == 4) {
+                processed = true;
 				Console.WriteLine("Exporting from:\n\t{0}\nto:\n\t{1}\n\t{2}", args[1], args[2], args[3]);
 				font = new NftrFont(args[1]);
 				font.Export(args[2], args[3]);
 			}
+
+            // Export to basic json
+            if (args[0] == "-ejson" && args.Length == 3) {
+                processed = true;
+                Console.WriteLine("Exporting from:\n\t{0}\nto:\n\t{1}", args[1], args[2]);
+                font = new NftrFont(args[1]);
+                font.ExportInfoIntoJson(args[2]);
+            }
+
+            if (!processed)
+                PrintHelp();
 
 			Console.WriteLine();
 			Console.WriteLine("Done!");

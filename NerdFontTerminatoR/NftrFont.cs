@@ -231,6 +231,38 @@ namespace Nftr
 			doc.Save(xmlPath);
 		}
 
+        public void ExportInfoIntoJson(string jsonFile)
+        {
+            // I know what you are thinking now: WHY ARE YOU NOT USING A JSON LIBRARY
+            // well, this is just a quick thing that can be done with preformat strings.
+            // Just some text to be parsed by an external tool. I am saving one dependency
+            // if one day I need something more complex I promise I will use a json lib.
+            StreamWriter sw = new StreamWriter(jsonFile);
+
+            // The info will be in a dictionary, and a dictionary starts with {
+            sw.WriteLine("{");
+
+            // Ok, this is not funny anymore if I had to quote the quotes...
+            sw.WriteLine("    \"fontName\": \"\",");
+            sw.WriteLine("    \"lineHeight\": {0}", cglp.BoxHeight);
+
+            // And more indentation now...
+            sw.WriteLine("    \"characters\": {");
+            foreach (Glyph g in this.glyphs) {
+                // Quote the double quote and backslash
+                string charGlyph = finf.GetChar(g.CharCode);
+                if (charGlyph == "\\" || charGlyph == "\"")
+                    charGlyph = "\\" + charGlyph;
+
+                sw.WriteLine("        \"{0}\": {1},", charGlyph, g.Width.Advance);
+            }
+            sw.WriteLine("    }");
+
+            // Finally...
+            sw.WriteLine("}");
+            sw.Close();
+        }
+
 		/// <summary>
 		/// Export all glyphs in a image using default settings.
 		/// </summary>
