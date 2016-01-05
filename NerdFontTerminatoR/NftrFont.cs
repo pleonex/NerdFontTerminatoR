@@ -244,7 +244,7 @@ namespace Nftr
 
             // Ok, this is not funny anymore if I had to quote the quotes...
             sw.WriteLine("    \"fontName\": \"\",");
-            sw.WriteLine("    \"lineHeight\": {0}", cglp.BoxHeight);
+            sw.WriteLine("    \"lineHeight\": {0},", cglp.BoxHeight);
 
             // And more indentation now...
             sw.WriteLine("    \"characters\": {");
