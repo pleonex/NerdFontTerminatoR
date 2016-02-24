@@ -569,7 +569,7 @@ namespace Nftr
 
             #if DEBUG
             // Ignore multiple matches of ? because this is an encoding problem.
-            if (ch != '?' && matches.Any()) {
+            if (ch != '?' && matches.Count() > 1) {
                 Console.WriteLine(
                     "WARNING: Multiple matches for char '{0}' -> {1}",
                     ch,
