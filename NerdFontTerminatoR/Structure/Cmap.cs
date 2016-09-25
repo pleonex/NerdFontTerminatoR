@@ -268,19 +268,18 @@ namespace Nftr.Structure
 			
 
 			// Resize and do a binary search copy
+            bool copied = false;
 			int[,] map = new int[this.Map.GetLength(0) + 1, 2];
 			for (int i = 0, j = 0; i < map.GetLength(0); i++) {
-				if (j < this.Map.GetLength(0) && charCode > this.Map[j, 0]) {
+                if (j < this.Map.GetLength(0) && (copied || charCode > this.Map[j, 0])) {
 					map[i, 0] = this.Map[j, 0];
 					map[i, 1] = this.Map[j, 1];
 					j++;
-				} else if (charCode != 0xFFFF) {
+                } else if (!copied) {
 					map[i, 0] = charCode;
 					map[i, 1] = imgIndex;
-					charCode = 0xFFFF; // It won't be copied again
-				} else {
-					throw new Exception("Unknown error");
-				}
+                    copied = true;
+                }
 			}
 
 			this.Map = map;
