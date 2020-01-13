@@ -42,6 +42,8 @@ namespace Nftr
         public void DrawString(string text, Graphics graphics, int x, int y,
             int? maxWidth = null, int extraGap = 0)
         {
+            int baseX = x;
+
             int lineGap = baseLineGap + extraGap;
             foreach (char ch in text) {
                 if (ch == '\r')
@@ -49,7 +51,7 @@ namespace Nftr
 
                 // If a new line char, go to next line.
                 if (ch == '\n') {
-                    x = 0;
+                    x = baseX;
                     y += lineGap;
                     continue;
                 }
