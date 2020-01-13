@@ -211,10 +211,16 @@ namespace Nftr.Structure
 
 		private Colour[] GetPalette()
 		{
-			Colour[] palette = new Colour[1 << this.Depth];
+			int numColors = 1 << Depth;
 
-			for (int i = 0; i < palette.Length; i++) {
-				int colorIndex = (int)(255 * (1 - (float)i / (palette.Length - 1)));
+			var customPalette = NftrFont.CustomPalette;
+			if (customPalette?.Length >= numColors)
+				return customPalette;
+
+			Colour[] palette = new Colour[numColors];
+
+			for (int i = 0; i < numColors; i++) {
+				int colorIndex = (int)(255 * (1 - (float)i / (numColors - 1)));
 				palette[i] = new Colour(colorIndex, colorIndex, colorIndex);
 			}
 

@@ -91,6 +91,11 @@ namespace Nftr
             private set;
         }
 
+		public static Colour[] CustomPalette {
+			get;
+			set;
+		}
+
 		protected override bool IsSupported(ushort version)
 		{
 			return Versions.Contains(version);
