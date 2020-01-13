@@ -40,7 +40,7 @@ namespace Nftr
         }
 
         public void DrawString(string text, Graphics graphics, int x, int y,
-            int? maxWidth = null, int extraGap = 0)
+            int? maxWidth = null, int extraGap = 0, int extraSpace = 0)
         {
             int baseX = x;
 
@@ -61,20 +61,21 @@ namespace Nftr
 
                 // If we are over the max width, go to next line.
                 if (maxWidth.HasValue && x + glyph.Width.Advance > maxWidth) {
-                    x = 0;
+                    x = baseX;
                     y += lineGap;
                 }
 
                 x += glyph.Width.BearingX;
                 graphics.DrawImageUnscaled(glyph.ToImage(1, true), x, y);
                 x += glyph.Width.Advance - glyph.Width.BearingX;
+                x += extraSpace;
             }
         }
 
-        public int GetStringLength(string text)
+        public int GetStringLength(string text, int extraSpace = 0)
         {
             return text.Split('\n').Max(line =>
-                line.Sum(ch => (font.SearchGlyphByChar(ch) ?? defaultChar).Width.Advance));
+                line.Sum(ch => (font.SearchGlyphByChar(ch) ?? defaultChar).Width.Advance + extraSpace));
         }
     }
 }
